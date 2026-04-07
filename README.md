@@ -1,9 +1,8 @@
 # Pomodora Sanctuary
 
-Pomodora Sanctuary is a small experimental focus game built to learn **TypeScript**, **Svelte**, and clean front-end architecture.
+Pomodora Sanctuary is a small experimental project designed to explore **TypeScript architecture**, domain modeling, and progressive application design.
 
-The core idea is simple:  
-the user performs focus rituals to refine raw minerals into hidden artifacts.
+The goal is to build a solid **logic-first foundation**, and later integrate a UI layer using SvelteKit.
 
 ---
 
@@ -11,27 +10,39 @@ the user performs focus rituals to refine raw minerals into hidden artifacts.
 
 This project is designed to:
 
-- Learn TypeScript architecture
-- Understand Svelte fundamentals
-- Practice clean state management
-- Build a structured front-end project
+- Learn TypeScript through real-world architecture
+- Build a clean and maintainable domain layer
+- Understand separation between logic and UI
+- Design a scalable application from first principles
 - Explore game design and product thinking
 
-This is a **learning-first project**, not a production-ready app.
+This is a **learning-first project**, not a production-ready application.
 
 ---
 
-## 🔁 Core Gameplay Loop
+## 🧠 Project Philosophy
 
-1. Buy a raw mineral using Essence
-2. Select a mineral
-3. Start a focus ritual (timer)
-4. Complete the ritual
-5. Gain Essence
-6. Progress the mineral
-7. Reveal an artifact
-8. Add it to the collection
-9. Repeat
+The project follows a **logic-first approach**:
+
+1. Define data structures
+2. Implement core logic
+3. Validate systems
+4. Introduce UI later
+5. Iterate on experience
+
+The UI (Svelte/SvelteKit) is intentionally postponed to avoid mixing concerns too early.
+
+---
+
+## 🔁 Core Concept
+
+The application is built around a **focus ritual system**:
+
+- Users perform timed sessions (rituals)
+- Each session contributes to refining a mineral
+- Minerals evolve over time based on worked minutes
+- Once complete, a mineral reveals a hidden artifact
+- Artifacts are collected and tracked
 
 ---
 
@@ -53,7 +64,7 @@ Examples:
 - 45 min → 4 Essence
 - 60 min → 6 Essence
 
-Essence is used to buy new raw minerals.
+Essence is used to acquire new minerals.
 
 ---
 
@@ -61,17 +72,17 @@ Essence is used to buy new raw minerals.
 
 | Material  | Cost | Stages | Total Time |
 |----------|------|--------|------------|
-| Argile   | 1    | 3      | ~90 min    |
-| Calcaire | 10   | 4      | ~180 min   |
-| Marbre   | 40   | 5      | ~300 min   |
+| Clay   | 1    | 3      | ~90 min    |
+| Limestone | 10   | 4      | ~180 min   |
+| Marble   | 40   | 5      | ~300 min   |
 
-Each mineral has **3 possible artifact outcomes**:
+Each mineral has 3 possible outcomes:
 
 - Common (60%)
 - Rare (30%)
 - Epic (10%)
 
-The artifact is determined when the mineral is purchased, but only revealed when fully refined.
+The outcome is determined at purchase but revealed only when refinement is complete.
 
 ---
 
@@ -79,44 +90,35 @@ The artifact is determined when the mineral is purchased, but only revealed when
 
 ### Mineral Progression
 - Based on **worked minutes**
-- Not based on number of rituals
+- Not based on number of sessions
 
-### Inventory
-- Multiple minerals can be owned
-- One mineral is selected per ritual
-- 3 quick slots available on the main screen
+### RNG (Soft Randomness)
+- Artifact outcome is determined at purchase
+- Revealed only at completion
 
-### Collection
-- Stores discovered artifacts
-- Displays rarity tags
-
----
-
-## 📱 Screens (MVP)
-
-### Ritual
-- Timer
-- Selected mineral
-- Progression
-- Start / Stop actions
-
-### Workshop
-- Buy minerals
-- Browse inventory
-- Select mineral
-
-### Collection
-- View discovered artifacts
-- Display rarity
+### Inventory & Collection (future UI layer)
+- Multiple minerals owned
+- One active at a time
+- Artifact collection tracking
 
 ---
 
-## 🧰 Tech Stack
+## 🧰 Tech Stack (Current Phase)
 
-- SvelteKit
 - TypeScript
-- LocalStorage (for persistence)
-- Supabase (planned later)
+- Node environment
+- No UI framework (yet)
+
+---
+
+## 🔮 Planned Evolution
+
+Later stages will introduce:
+
+- SvelteKit (UI layer)
+- State management (stores)
+- Local persistence
+- Optional backend (Supabase)
 
 ---
 
@@ -128,33 +130,20 @@ See full documentation in:
 
 ---
 
-## 🚀 Development Approach
-
-The project is built step by step:
-
-1. Define data models
-2. Implement core logic
-3. Create state management
-4. Build UI
-5. Improve UX & visuals
-
-Priority is given to **clarity and learning**, not speed.
-
----
-
 ## 📍 Current Status
 
-Project setup in progress.
+Core TypeScript structure initialized.
 
 Next step:
 
-👉 Define `models.ts`
+👉 Define and refine `models.ts`
 
 ---
 
 ## 🧠 Notes
 
-- Keep logic separated from UI
-- Avoid overengineering
-- Focus on understanding, not just building
+- Keep logic independent from UI
+- Prefer pure functions
+- Avoid premature abstraction
+- Focus on clarity over complexity
 - Build small, iterate fast
