@@ -2,64 +2,72 @@ import type { ArtifactDefinition, MaterialType } from '../core/models';
 
 export const ARTIFACTS: readonly ArtifactDefinition[] = [
   {
-    id: 'argile-common-urn',
-    materialType: 'argile',
+    id: 'clay-common-urn',
+    materialType: 'clay',
     rarity: 'common',
     name: 'Urn Fragment',
     description: 'A humble shard carrying traces of old rituals.',
   },
+  
   {
-    id: 'argile-rare-seal',
-    materialType: 'argile',
+    id: 'clay-rare-seal',
+    materialType: 'clay',
     rarity: 'rare',
     name: 'Keeper Seal',
     description: 'A stamped mark once used to certify sacred clay.',
   },
+
   {
-    id: 'argile-epic-mask',
-    materialType: 'argile',
+    id: 'clay-epic-mask',
+    materialType: 'clay',
     rarity: 'epic',
     name: 'Sanctum Mask',
     description: 'A ceremonial mask preserved beneath the dust.',
   },
+
   {
-    id: 'calcaire-common-tablet',
-    materialType: 'calcaire',
+    id: 'limestone-common-tablet',
+    materialType: 'limestone',
     rarity: 'common',
     name: 'Weathered Tablet',
     description: 'A limestone plate etched with simple symbols.',
   },
+
   {
-    id: 'calcaire-rare-lintel',
-    materialType: 'calcaire',
+    id: 'limestone-rare-lintel',
+    materialType: 'limestone',
     rarity: 'rare',
     name: 'Temple Lintel',
     description: 'A carved fragment from a forgotten doorway.',
   },
+
   {
-    id: 'calcaire-epic-crown',
-    materialType: 'calcaire',
+    id: 'limestone-epic-crown',
+    materialType: 'limestone',
     rarity: 'epic',
     name: 'Crown of Echoes',
     description: 'An ornate relic tied to ancient processions.',
   },
+
   {
-    id: 'marbre-common-inlay',
-    materialType: 'marbre',
+    id: 'marble-common-inlay',
+    materialType: 'marble',
     rarity: 'common',
     name: 'Marble Inlay',
     description: 'A polished inlay once used in a shrine floor.',
   },
+
   {
-    id: 'marbre-rare-bust',
-    materialType: 'marbre',
+    id: 'marble-rare-bust',
+    materialType: 'marble',
     rarity: 'rare',
     name: 'Silent Bust',
     description: 'A sculpted profile with missing inscriptions.',
   },
+  
   {
-    id: 'marbre-epic-monolith',
-    materialType: 'marbre',
+    id: 'marble-epic-monolith',
+    materialType: 'marble',
     rarity: 'epic',
     name: 'Veiled Monolith',
     description: 'A pristine marble relic with unknown purpose.',

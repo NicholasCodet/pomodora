@@ -3,9 +3,9 @@
  * This module intentionally contains only types and no runtime logic.
  */
 
-export type MaterialType = 'argile' | 'calcaire' | 'marbre';
+export type MaterialType = 'clay' | 'limestone' | 'marble';
 
-export type ArtifactRarity = 'common' | 'rare' | 'epic';
+export type Rarity = 'common' | 'rare' | 'epic';
 
 export type MineralId = string;
 export type ArtifactId = string;
@@ -15,12 +15,15 @@ export type Minutes = number;
 
 /**
  * Static definition for each material family.
- * `stageThresholdsMinutes` values are cumulative checkpoints.
+ * `stageThresholds` values are cumulative minute checkpoints.
  */
 export interface MaterialDefinition {
   type: MaterialType;
+  name: string;
   cost: Essence;
-  stageThresholdsMinutes: readonly Minutes[];
+  stageCount: number;
+  stageThresholds: readonly Minutes[];
+  possibleArtifactIds: readonly ArtifactId[];
 }
 
 /**
@@ -29,7 +32,7 @@ export interface MaterialDefinition {
 export interface ArtifactDefinition {
   id: ArtifactId;
   materialType: MaterialType;
-  rarity: ArtifactRarity;
+  rarity: Rarity;
   name: string;
   description: string;
 }
@@ -46,18 +49,28 @@ export interface OwnedMineral {
   revealedAt: number | null;
 }
 
-export interface CollectionEntry {
+export interface OwnedArtifact {
   artifactId: ArtifactId;
-  discoveredAt: number;
   sourceMineralId: MineralId;
+  discoveredAt: number;
+}
+
+export interface PlayerStats {
+  completedRituals: number;
+  totalWorkedMinutes: Minutes;
+}
+
+export interface PlayerProgress {
+  essence: Essence;
+  stats: PlayerStats;
 }
 
 /**
  * Persisted game state for local-first MVP.
  */
 export interface GameState {
-  essence: Essence;
-  activeMineralId: MineralId | null;
+  player: PlayerProgress;
+  selectedMineralId: MineralId | null;
   inventory: OwnedMineral[];
-  collection: CollectionEntry[];
+  collection: OwnedArtifact[];
 }

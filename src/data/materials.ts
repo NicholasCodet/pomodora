@@ -1,25 +1,40 @@
 import type { MaterialDefinition, MaterialType } from '../core/models';
 
-export const MATERIALS: readonly MaterialDefinition[] = [
-  {
-    type: 'argile',
+export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialType, MaterialDefinition>> = {
+  clay: {
+    type: 'clay',
+    name: 'Clay',
     cost: 1,
-    stageThresholdsMinutes: [30, 60, 90],
+    stageCount: 3,
+    stageThresholds: [30, 60, 90],
+    possibleArtifactIds: ['clay-common-urn', 'clay-rare-seal', 'clay-epic-mask'],
   },
-  {
-    type: 'calcaire',
-    cost: 10,
-    stageThresholdsMinutes: [45, 90, 135, 180],
-  },
-  {
-    type: 'marbre',
-    cost: 40,
-    stageThresholdsMinutes: [60, 120, 180, 240, 300],
-  },
-];
 
-export const MATERIALS_BY_TYPE: Readonly<Record<MaterialType, MaterialDefinition>> = {
-  argile: MATERIALS[0],
-  calcaire: MATERIALS[1],
-  marbre: MATERIALS[2],
+  limestone: {
+    type: 'limestone',
+    name: 'Limestone',
+    cost: 10,
+    stageCount: 4,
+    stageThresholds: [45, 90, 135, 180],
+    possibleArtifactIds: [
+      'limestone-common-tablet',
+      'limestone-rare-lintel',
+      'limestone-epic-crown',
+    ],
+  },
+  
+  marble: {
+    type: 'marble',
+    name: 'Marble',
+    cost: 40,
+    stageCount: 5,
+    stageThresholds: [60, 120, 180, 240, 300],
+    possibleArtifactIds: ['marble-common-inlay', 'marble-rare-bust', 'marble-epic-monolith'],
+  },
 };
+
+export const MATERIALS: readonly MaterialDefinition[] = Object.values(MATERIAL_DEFINITIONS);
+
+export function getMaterialDefinition(type: MaterialType): MaterialDefinition {
+  return MATERIAL_DEFINITIONS[type];
+}

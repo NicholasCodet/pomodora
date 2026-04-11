@@ -132,11 +132,18 @@ See full documentation in:
 
 ## 📍 Current Status
 
-Core TypeScript structure initialized.
+TypeScript domain layer is in place and split by responsibility (`purchase`, `ritual`, `reveal`, `selection`, `shop`, `progression`, `state`).
 
-Next step:
+Current working flow includes:
 
-👉 Define and refine `models.ts`
+- purchasing minerals with unlock/cost validation
+- selecting active mineral
+- applying completed rituals
+- revealing completed artifacts
+- read-only helpers for shop state and selected mineral progress
+- persistence serialization/validation helpers
+
+`src/index.ts` is used as an integration sandbox to validate scenarios and edge cases.
 
 ---
 

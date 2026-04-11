@@ -1,35 +1,24 @@
 # Architecture
 
-This document explains the structure of the project and the role of each folder and file.
+This project is currently a TypeScript-only domain engine.  
+There is no UI framework in this phase.
 
-The goal is to keep the codebase **simple, readable, and maintainable**, while focusing on a **logic-first architecture**.
-
----
-
-## 🧱 Architecture Overview
-
-The project is currently built around a **TypeScript domain layer**, without any UI framework.
-
-It is split into three main parts:
-
-1. **Core** → business logic and rules  
-2. **Data** → static definitions and content  
-3. **Utils** → generic helper functions  
-
-This separation ensures that the logic remains independent and reusable.
-
----
-
-## 📁 Project Structure
+## Structure
 
 ```txt
 src/
   core/
     models.ts
-    logic.ts
     constants.ts
-    rng.ts
+    state.ts
     progression.ts
+    rng.ts
+    purchase.ts
+    ritual.ts
+    reveal.ts
+    selection.ts
+    shop.ts
+    logic.ts
   data/
     materials.ts
     artifacts.ts
@@ -40,118 +29,44 @@ src/
   index.ts
 ```
 
----
+## Core Layer (`src/core`)
 
-## 🧠 `src/core/`
+- `models.ts`: domain types and interfaces only (no runtime logic).
+- `constants.ts`: shared domain constants (economy, unlock thresholds, storage key).
+- `state.ts`: initial state factories.
+- `progression.ts`: progression validation and stage/unlock read helpers.
+- `rng.ts`: deterministic/random selection helpers.
+- `purchase.ts`: buy mineral flow and purchase validation.
+- `ritual.ts`: completed ritual application and essence reward rule.
+- `reveal.ts`: artifact reveal flow when mineral is complete.
+- `selection.ts`: selected mineral action and read helper.
+- `shop.ts`: read-only shop material states.
+- `logic.ts`: barrel re-export for stable imports (`./core/logic`).
 
-This is the **heart of the application**.
+Core stays framework-agnostic and owns business rules.
 
-It contains all business logic and domain modeling.
+## Data Layer (`src/data`)
 
-- `models.ts` → defines TypeScript types and interfaces  
-- `logic.ts` → implements core game rules and transformations  
-- `constants.ts` → stores static configuration values  
-- `rng.ts` → handles controlled randomness  
-- `progression.ts` → manages progression systems (levels, unlocks)
+- `materials.ts`: static material definitions.
+- `artifacts.ts`: static artifact definitions.
 
-👉 This layer must remain **framework-agnostic**.
+Data files contain content, not behavior.
 
----
+## Utilities (`src/utils`)
 
-## 📦 `src/data/`
+- `id.ts`: local ID helper.
+- `time.ts`: generic time conversions and timestamp helper.
+- `storage.ts`: serialization/deserialization and runtime validation for persisted `GameState`.
 
-This folder contains **static game content**.
+Utilities must stay generic and avoid game rules.
 
-- `materials.ts` → defines available minerals (clay, limestone, marble)  
-- `artifacts.ts` → defines possible artifact outcomes  
+## Sandbox (`src/index.ts`)
 
-👉 This layer separates content from logic, making balancing easier.
+`index.ts` is an integration sandbox.  
+It orchestrates scenarios and logs behavior, but does not define domain rules.
 
----
+## Boundaries
 
-## 🛠️ `src/utils/`
-
-Generic helper functions used across the project.
-
-- `id.ts` → generates unique identifiers  
-- `time.ts` → time-related helpers  
-- `storage.ts` → persistence helpers (local storage or future use)  
-
-👉 Utilities must remain generic and avoid business rules.
-
----
-
-## 📄 `src/index.ts`
-
-Entry point of the application.
-
-This file can be used to:
-- test logic
-- run simulations
-- debug systems
-
----
-
-## 🧠 Development Principles
-
-### Logic first
-All game rules must be implemented before introducing UI.
-
-### Separation of concerns
-- Core = rules  
-- Data = content  
-- Utils = helpers  
-
-### Pure functions
-Favor pure, predictable functions for easier testing and reasoning.
-
-### No framework dependency
-The core layer must not depend on any UI framework.
-
-### Keep it simple
-Avoid unnecessary abstractions or premature complexity.
-
----
-
-## 🧭 Recommended Development Order
-
-1. `models.ts`  
-2. `materials.ts`  
-3. `artifacts.ts`  
-4. `logic.ts`  
-5. `rng.ts`  
-6. `progression.ts`  
-7. integration in `index.ts`  
-
----
-
-## 🔮 Future Evolution
-
-Once the core logic is stable, the project will evolve to include a UI layer.
-
-Planned additions:
-
-### UI Layer
-- SvelteKit
-- Components (ritual, workshop, collection)
-- State management (stores)
-
-### Persistence
-- Local storage integration
-- Optional cloud save
-
-### Backend (optional)
-- Supabase for authentication and sync
-
-👉 These features will be added **after the domain logic is stable**.
-
----
-
-## 🧠 Summary
-
-- `core/` → business logic  
-- `data/` → static content  
-- `utils/` → helpers  
-- `index.ts` → entry point  
-
-The goal is to build a **clean, modular, and extensible foundation** before adding UI complexity.
+- Domain actions mutate state immutably and return `{ ok: true | false }` results.
+- Domain read helpers never mutate state.
+- UI concerns are intentionally out of scope in this phase.
