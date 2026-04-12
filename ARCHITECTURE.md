@@ -18,6 +18,8 @@ src/
     reveal.ts
     selection.ts
     shop.ts
+    summary.ts
+    use-cases.ts
     logic.ts
   data/
     materials.ts
@@ -41,6 +43,8 @@ src/
 - `reveal.ts`: artifact reveal flow when mineral is complete.
 - `selection.ts`: selected mineral action and read helper.
 - `shop.ts`: read-only shop material states.
+- `summary.ts`: read-only player progression summary snapshot.
+- `use-cases.ts`: thin application layer that composes domain actions for user-intent flows.
 - `logic.ts`: barrel re-export for stable imports (`./core/logic`).
 
 Core stays framework-agnostic and owns business rules.

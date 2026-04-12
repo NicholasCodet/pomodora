@@ -1,9 +1,13 @@
 import {
   applyCompletedRitual,
+  buyAndSelectMineral,
+  completeRitualOnSelectedMineral,
+  getPlayerSummary,
   getSelectedMineral,
   getShopMaterialStates,
   purchaseMineral,
   revealArtifactIfComplete,
+  revealSelectedMineralIfComplete,
   selectMineral,
 } from './core/logic';
 import type { GameState, MaterialDefinition, MaterialType, MineralId } from './core/models';
@@ -13,15 +17,24 @@ import { ARTIFACTS } from './data/artifacts';
 import { MATERIAL_DEFINITIONS, MATERIALS } from './data/materials';
 import { createId } from './utils/id';
 
+interface FailureResult {
+  ok: false;
+  reason: string;
+}
+
 function createState(essence: number): GameState {
   return createInitialGameState(essence);
 }
 
-function section(title: string): void {
+function printSuite(title: string): void {
+  console.log(`\n\n##### ${title} #####`);
+}
+
+function printSection(title: string): void {
   console.log(`\n=== ${title} ===`);
 }
 
-function logFailure(result: { ok: false; reason: string }): void {
+function printFailureResult(result: FailureResult): void {
   console.log(`result: ok=false, reason=${result.reason}`);
 }
 
@@ -40,33 +53,11 @@ function printShopMaterialStates(label: string, state: GameState): void {
   }
 }
 
-function scenarioPurchaseInsufficientEssence(): void {
-  section('Purchase With Insufficient Essence');
-  const state = createState(0);
-  const result = purchaseMineral(state, 'clay', MATERIAL_DEFINITIONS, () => createId('mineral'));
-  if (result.ok) {
-    console.log('unexpected success');
-    return;
-  }
-  logFailure(result);
-}
-
-function scenarioInvalidMaterialType(): void {
-  section('Purchase With Invalid Material Type');
-  const state = createState(100);
-  // Runtime safety check: bypassing compile-time union on purpose.
-  const invalidMaterialType = 'obsidian' as unknown as MaterialType;
-  const result = purchaseMineral(
-    state,
-    invalidMaterialType,
-    MATERIAL_DEFINITIONS,
-    () => createId('mineral'),
+function printPlayerSummary(label: string, state: GameState): void {
+  const summary = getPlayerSummary(state, MATERIALS);
+  console.log(
+    `${label} essence=${summary.essence}, rituals=${summary.completedRituals}, worked=${summary.totalWorkedMinutes}, unlocked=${summary.unlockedMaterialTypes.join(', ')}, unlockedCount=${summary.unlockedMaterialCount}, collection=${summary.collectionCount}, inventory=${summary.inventoryCount}, selected=${summary.selectedMineralId ?? 'none'}`,
   );
-  if (result.ok) {
-    console.log('unexpected success');
-    return;
-  }
-  logFailure(result);
 }
 
 function purchaseClayOrThrow(essence: number): { state: GameState; mineralId: MineralId } {
@@ -88,8 +79,98 @@ function purchaseClayOrThrow(essence: number): { state: GameState; mineralId: Mi
   };
 }
 
+function scenarioSummarySnapshot(): void {
+  printSection('Player Summary');
+
+  let state = createState(5);
+  printPlayerSummary('start:', state);
+
+  const purchase = purchaseMineral(
+    state,
+    'clay',
+    MATERIAL_DEFINITIONS,
+    () => createId('mineral'),
+    () => 0,
+  );
+  if (!purchase.ok) {
+    printFailureResult(purchase);
+    return;
+  }
+  state = purchase.state;
+
+  for (const minutes of [30, 30, 30]) {
+    const ritual = applyCompletedRitual(state, purchase.mineral.id, minutes, MATERIAL_DEFINITIONS);
+    if (!ritual.ok) {
+      printFailureResult(ritual);
+      return;
+    }
+    state = ritual.state;
+  }
+
+  const reveal = revealArtifactIfComplete(
+    state,
+    purchase.mineral.id,
+    MATERIAL_DEFINITIONS,
+    ARTIFACTS,
+  );
+  if (!reveal.ok) {
+    printFailureResult(reveal);
+    return;
+  }
+  state = reveal.state;
+
+  printPlayerSummary('after progress:', state);
+}
+
+function scenarioUseCaseFlow(): void {
+  printSection('Use Case Flow: Buy + Ritual + Reveal');
+
+  let state = createState(10);
+
+  const buy = buyAndSelectMineral(
+    state,
+    'clay',
+    MATERIAL_DEFINITIONS,
+    () => createId('mineral'),
+    () => 0,
+  );
+  if (!buy.ok) {
+    printFailureResult(buy);
+    return;
+  }
+  state = buy.state;
+
+  console.log(
+    `buyAndSelectMineral: ok=true, mineralId=${buy.mineral.id}, selected=${state.selectedMineralId}`,
+  );
+
+  for (const minutes of [30, 30, 30]) {
+    const ritual = completeRitualOnSelectedMineral(state, minutes, MATERIAL_DEFINITIONS);
+    if (!ritual.ok) {
+      printFailureResult(ritual);
+      return;
+    }
+    state = ritual.state;
+    console.log(
+      `completeRitualOnSelectedMineral: ok=true, worked=${ritual.mineral.workedMinutes}, essenceGain=${ritual.essenceGain}`,
+    );
+  }
+
+  const reveal = revealSelectedMineralIfComplete(
+    state,
+    MATERIAL_DEFINITIONS,
+    ARTIFACTS,
+  );
+  if (!reveal.ok) {
+    printFailureResult(reveal);
+    return;
+  }
+
+  console.log(`revealSelectedMineralIfComplete: ok=true, artifact=${reveal.artifact.id}`);
+}
+
 function scenarioSelectValidMineral(): void {
-  section('Select Valid Mineral');
+  printSection('Select Valid Mineral');
 
   const firstPurchase = purchaseMineral(
     createState(100),
@@ -99,7 +180,7 @@ function scenarioSelectValidMineral(): void {
     () => 0,
   );
   if (!firstPurchase.ok) {
-    logFailure(firstPurchase);
+    printFailureResult(firstPurchase);
     return;
   }
 
@@ -111,34 +192,21 @@ function scenarioSelectValidMineral(): void {
     () => 0,
   );
   if (!secondPurchase.ok) {
-    logFailure(secondPurchase);
+    printFailureResult(secondPurchase);
     return;
   }
 
   const selectResult = selectMineral(secondPurchase.state, secondPurchase.mineral.id);
   if (!selectResult.ok) {
-    logFailure(selectResult);
+    printFailureResult(selectResult);
     return;
   }
 
-  console.log(
-    `result: ok=true, selectedMineralId=${selectResult.state.selectedMineralId}`,
-  );
-}
-
-function scenarioSelectInvalidMineral(): void {
-  section('Select Invalid Mineral');
-  const { state } = purchaseClayOrThrow(10);
-  const selectResult = selectMineral(state, 'missing-mineral-id');
-  if (selectResult.ok) {
-    console.log('unexpected success');
-    return;
-  }
-  logFailure(selectResult);
+  console.log(`result: ok=true, selectedMineralId=${selectResult.state.selectedMineralId}`);
 }
 
 function scenarioSelectedMineralReadHelpers(): void {
-  section('Selected Mineral Read Helpers');
+  printSection('Selected Mineral Read Helpers');
 
   const startState = createState(10);
   const selectedAtStart = getSelectedMineral(startState);
@@ -152,7 +220,7 @@ function scenarioSelectedMineralReadHelpers(): void {
     () => 0,
   );
   if (!purchase.ok) {
-    logFailure(purchase);
+    printFailureResult(purchase);
     return;
   }
 
@@ -172,7 +240,7 @@ function scenarioSelectedMineralReadHelpers(): void {
     MATERIAL_DEFINITIONS,
   );
   if (!ritual.ok) {
-    logFailure(ritual);
+    printFailureResult(ritual);
     return;
   }
 
@@ -185,7 +253,7 @@ function scenarioSelectedMineralReadHelpers(): void {
   const materialDefinition = MATERIAL_DEFINITIONS[selectedAfterRitual.materialType];
   const progressView = getMineralProgressView(selectedAfterRitual, materialDefinition);
   if (!progressView.ok) {
-    logFailure(progressView);
+    printFailureResult(progressView);
     return;
   }
 
@@ -194,34 +262,74 @@ function scenarioSelectedMineralReadHelpers(): void {
   );
 }
 
+function scenarioPurchaseInsufficientEssence(): void {
+  printSection('Purchase With Insufficient Essence');
+  const state = createState(0);
+  const result = purchaseMineral(state, 'clay', MATERIAL_DEFINITIONS, () => createId('mineral'));
+  if (result.ok) {
+    console.log('unexpected success');
+    return;
+  }
+  printFailureResult(result);
+}
+
+function scenarioInvalidMaterialType(): void {
+  printSection('Purchase With Invalid Material Type');
+  const state = createState(100);
+  // Runtime safety check: bypassing compile-time union on purpose.
+  const invalidMaterialType = 'obsidian' as unknown as MaterialType;
+  const result = purchaseMineral(
+    state,
+    invalidMaterialType,
+    MATERIAL_DEFINITIONS,
+    () => createId('mineral'),
+  );
+  if (result.ok) {
+    console.log('unexpected success');
+    return;
+  }
+  printFailureResult(result);
+}
+
+function scenarioSelectInvalidMineral(): void {
+  printSection('Select Invalid Mineral');
+  const { state } = purchaseClayOrThrow(10);
+  const selectResult = selectMineral(state, 'missing-mineral-id');
+  if (selectResult.ok) {
+    console.log('unexpected success');
+    return;
+  }
+  printFailureResult(selectResult);
+}
+
 function scenarioRitualZeroMinutes(): void {
-  section('Apply Ritual With 0 Minutes');
+  printSection('Apply Ritual With 0 Minutes');
   const { state, mineralId } = purchaseClayOrThrow(10);
   const result = applyCompletedRitual(state, mineralId, 0, MATERIAL_DEFINITIONS);
   if (result.ok) {
     console.log('unexpected success');
     return;
   }
-  logFailure(result);
+  printFailureResult(result);
 }
 
 function scenarioRitualUnknownMineral(): void {
-  section('Apply Ritual To Non-existent Mineral');
+  printSection('Apply Ritual To Non-existent Mineral');
   const state = createState(5);
   const result = applyCompletedRitual(state, 'missing-mineral', 25, MATERIAL_DEFINITIONS);
   if (result.ok) {
     console.log('unexpected success');
     return;
   }
-  logFailure(result);
+  printFailureResult(result);
 }
 
 function scenarioRitualAlreadyCompleted(): void {
-  section('Apply Ritual To Already Completed Mineral');
+  printSection('Apply Ritual To Already Completed Mineral');
   const { state: purchasedState, mineralId } = purchaseClayOrThrow(10);
   const firstRitual = applyCompletedRitual(purchasedState, mineralId, 90, MATERIAL_DEFINITIONS);
   if (!firstRitual.ok) {
-    logFailure(firstRitual);
+    printFailureResult(firstRitual);
     return;
   }
 
@@ -230,26 +338,26 @@ function scenarioRitualAlreadyCompleted(): void {
     console.log('unexpected success');
     return;
   }
-  logFailure(secondRitual);
+  printFailureResult(secondRitual);
 }
 
 function scenarioRevealBeforeCompletion(): void {
-  section('Reveal Before Completion');
+  printSection('Reveal Before Completion');
   const { state, mineralId } = purchaseClayOrThrow(10);
   const reveal = revealArtifactIfComplete(state, mineralId, MATERIAL_DEFINITIONS, ARTIFACTS);
   if (reveal.ok) {
     console.log('unexpected success');
     return;
   }
-  logFailure(reveal);
+  printFailureResult(reveal);
 }
 
 function scenarioRevealTwice(): void {
-  section('Reveal Artifact Twice');
+  printSection('Reveal Artifact Twice');
   const { state: purchasedState, mineralId } = purchaseClayOrThrow(10);
   const ritual = applyCompletedRitual(purchasedState, mineralId, 90, MATERIAL_DEFINITIONS);
   if (!ritual.ok) {
-    logFailure(ritual);
+    printFailureResult(ritual);
     return;
   }
 
@@ -260,7 +368,7 @@ function scenarioRevealTwice(): void {
     ARTIFACTS,
   );
   if (!firstReveal.ok) {
-    logFailure(firstReveal);
+    printFailureResult(firstReveal);
     return;
   }
 
@@ -278,11 +386,11 @@ function scenarioRevealTwice(): void {
     return;
   }
 
-  logFailure(secondReveal);
+  printFailureResult(secondReveal);
 }
 
 function scenarioCorruptedMaterialDefinition(): void {
-  section('Corrupted Material Definition (Invalid Thresholds)');
+  printSection('Corrupted Material Definition (Invalid Thresholds)');
 
   const corruptedDefinitions: Readonly<Record<MaterialType, MaterialDefinition>> = {
     ...MATERIAL_DEFINITIONS,
@@ -299,11 +407,11 @@ function scenarioCorruptedMaterialDefinition(): void {
     console.log('unexpected success');
     return;
   }
-  logFailure(purchase);
+  printFailureResult(purchase);
 }
 
 function scenarioPurchaseLockedThenUnlocked(): void {
-  section('Purchase Locked Then Unlocked Material');
+  printSection('Purchase Locked Then Unlocked Material');
 
   let state = createState(20);
   const lockedAttempt = purchaseMineral(
@@ -328,7 +436,7 @@ function scenarioPurchaseLockedThenUnlocked(): void {
     () => 0,
   );
   if (!clayPurchase.ok) {
-    logFailure(clayPurchase);
+    printFailureResult(clayPurchase);
     return;
   }
   state = clayPurchase.state;
@@ -336,7 +444,7 @@ function scenarioPurchaseLockedThenUnlocked(): void {
   for (const minutes of [30, 30, 30]) {
     const ritual = applyCompletedRitual(state, clayPurchase.mineral.id, minutes, MATERIAL_DEFINITIONS);
     if (!ritual.ok) {
-      logFailure(ritual);
+      printFailureResult(ritual);
       return;
     }
     state = ritual.state;
@@ -350,17 +458,15 @@ function scenarioPurchaseLockedThenUnlocked(): void {
     () => 0,
   );
   if (!unlockedAttempt.ok) {
-    logFailure(unlockedAttempt);
+    printFailureResult(unlockedAttempt);
     return;
   }
 
-  console.log(
-    `after progress purchase limestone: ok=true, mineralId=${unlockedAttempt.mineral.id}`,
-  );
+  console.log(`after progress purchase limestone: ok=true, mineralId=${unlockedAttempt.mineral.id}`);
 }
 
 function scenarioMaterialUnlockProgression(): void {
-  section('Material Unlock Progression');
+  printSection('Material Unlock Progression + Shop Snapshot');
 
   let state = createState(5);
   const unlockedAtStart = getUnlockedMaterials(state, MATERIALS);
@@ -375,7 +481,7 @@ function scenarioMaterialUnlockProgression(): void {
     () => 0,
   );
   if (!firstPurchase.ok) {
-    logFailure(firstPurchase);
+    printFailureResult(firstPurchase);
     return;
   }
   state = firstPurchase.state;
@@ -383,7 +489,7 @@ function scenarioMaterialUnlockProgression(): void {
   for (const minutes of [30, 30, 30]) {
     const ritual = applyCompletedRitual(state, firstPurchase.mineral.id, minutes, MATERIAL_DEFINITIONS);
     if (!ritual.ok) {
-      logFailure(ritual);
+      printFailureResult(ritual);
       return;
     }
     state = ritual.state;
@@ -397,7 +503,7 @@ function scenarioMaterialUnlockProgression(): void {
     () => 0,
   );
   if (!secondPurchase.ok) {
-    logFailure(secondPurchase);
+    printFailureResult(secondPurchase);
     return;
   }
   state = secondPurchase.state;
@@ -410,7 +516,7 @@ function scenarioMaterialUnlockProgression(): void {
       MATERIAL_DEFINITIONS,
     );
     if (!ritual.ok) {
-      logFailure(ritual);
+      printFailureResult(ritual);
       return;
     }
     state = ritual.state;
@@ -423,21 +529,48 @@ function scenarioMaterialUnlockProgression(): void {
   printShopMaterialStates('shop after progress:', state);
 }
 
-function runSandbox(): void {
-  console.log('Pomodora Sanctuary Domain Edge-case Sandbox');
+function runSummaryScenario(): void {
+  printSuite('Summary Scenario');
+  scenarioSummarySnapshot();
+}
+
+function runHappyPathScenario(): void {
+  printSuite('Happy Path Scenario');
+  scenarioUseCaseFlow();
+  scenarioSelectValidMineral();
+  scenarioSelectedMineralReadHelpers();
+}
+
+function runEdgeCaseScenarios(): void {
+  printSuite('Edge Case Scenarios');
   scenarioPurchaseInsufficientEssence();
   scenarioInvalidMaterialType();
-  scenarioSelectValidMineral();
   scenarioSelectInvalidMineral();
-  scenarioSelectedMineralReadHelpers();
   scenarioRitualZeroMinutes();
   scenarioRitualUnknownMineral();
   scenarioRitualAlreadyCompleted();
   scenarioRevealBeforeCompletion();
   scenarioRevealTwice();
   scenarioCorruptedMaterialDefinition();
+}
+
+function runUnlockScenario(): void {
+  printSuite('Unlock Scenario');
   scenarioPurchaseLockedThenUnlocked();
+}
+
+function runShopScenario(): void {
+  printSuite('Shop Scenario');
   scenarioMaterialUnlockProgression();
+}
+
+function runSandbox(): void {
+  console.log('Pomodora Sanctuary Domain Integration Sandbox');
+  runSummaryScenario();
+  runHappyPathScenario();
+  runEdgeCaseScenarios();
+  runUnlockScenario();
+  runShopScenario();
 }
 
 runSandbox();
