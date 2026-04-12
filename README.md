@@ -2,7 +2,9 @@
 
 Pomodora Sanctuary is a small experimental project designed to explore **TypeScript architecture**, domain modeling, and progressive application design.
 
-The goal is to build a solid **logic-first foundation**, and later integrate a UI layer using SvelteKit.
+The project now has:
+- a domain-first TypeScript engine
+- a thin SvelteKit UI layer on top
 
 ---
 
@@ -30,7 +32,7 @@ The project follows a **logic-first approach**:
 4. Introduce UI later
 5. Iterate on experience
 
-The UI (Svelte/SvelteKit) is intentionally postponed to avoid mixing concerns too early.
+UI integration is intentionally incremental to avoid mixing concerns too early.
 
 ---
 
@@ -106,19 +108,18 @@ The outcome is determined at purchase but revealed only when refinement is compl
 ## 🧰 Tech Stack (Current Phase)
 
 - TypeScript
+- SvelteKit
 - Node environment
-- No UI framework (yet)
 
 ---
 
 ## 🔮 Planned Evolution
 
-Later stages will introduce:
+Later stages will expand:
 
-- SvelteKit (UI layer)
-- State management (stores)
-- Local persistence
-- Optional backend (Supabase)
+- UI interactions and state synchronization
+- local persistence wiring in UI
+- optional backend sync (Supabase)
 
 ---
 
@@ -132,7 +133,7 @@ See full documentation in:
 
 ## 📍 Current Status
 
-TypeScript domain layer is in place and split by responsibility (`purchase`, `ritual`, `reveal`, `selection`, `shop`, `progression`, `state`).
+TypeScript domain layer is in place and split by responsibility (`purchase`, `ritual`, `reveal`, `selection`, `shop`, `progression`, `state`, `use-cases`).
 
 Current working flow includes:
 
@@ -144,6 +145,7 @@ Current working flow includes:
 - persistence serialization/validation helpers
 
 `src/index.ts` is used as an integration sandbox to validate scenarios and edge cases.
+SvelteKit currently exposes a minimal read-only page through a thin app bridge (`src/lib/app/game.ts`).
 
 ---
 

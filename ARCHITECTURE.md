@@ -1,11 +1,14 @@
 # Architecture
 
-This project is currently a TypeScript-only domain engine.  
-There is no UI framework in this phase.
+This project uses a domain-first architecture:
+- TypeScript domain engine as source of truth
+- SvelteKit UI layer on top through a thin app bridge
 
 ## Structure
 
 ```txt
+svelte.config.js
+vite.config.ts
 src/
   core/
     models.ts
@@ -24,10 +27,19 @@ src/
   data/
     materials.ts
     artifacts.ts
+  lib/
+    app/
+      game.ts
+    components/
+      ShopMaterialTable.svelte
+    stores/
   utils/
     id.ts
     time.ts
     storage.ts
+  routes/
+    +page.ts
+    +page.svelte
   index.ts
 ```
 
@@ -48,6 +60,18 @@ src/
 - `logic.ts`: barrel re-export for stable imports (`./core/logic`).
 
 Core stays framework-agnostic and owns business rules.
+
+## App Bridge (`src/lib/app`)
+
+- `game.ts`: UI-facing application boundary.
+- It composes domain/data/util functions for SvelteKit routes/components.
+- It must stay thin and never duplicate business rules.
+
+## UI Layer (`src/routes`, `src/lib/components`)
+
+- Routes and components render data and handle interaction concerns.
+- UI reads/dispatches through `src/lib/app/game.ts`.
+- Domain rules remain in `src/core`.
 
 ## Data Layer (`src/data`)
 
@@ -73,4 +97,5 @@ It orchestrates scenarios and logs behavior, but does not define domain rules.
 
 - Domain actions mutate state immutably and return `{ ok: true | false }` results.
 - Domain read helpers never mutate state.
-- UI concerns are intentionally out of scope in this phase.
+- Use-case functions compose domain actions for user-intent flows.
+- UI must consume domain through the app bridge, not by re-implementing rules.
