@@ -144,12 +144,16 @@ export function revealArtifactIfComplete(
   const nextInventory = state.inventory.filter((entry) => entry.id !== mineralId);
   const nextSelectedMineralId =
     state.selectedMineralId === mineralId ? nextInventory[0]?.id ?? null : state.selectedMineralId;
+  const nextRitualSlotMineralIds = state.ritualSlotMineralIds.filter((id) =>
+    nextInventory.some((entry) => entry.id === id),
+  );
 
   return {
     ok: true,
     state: {
       ...state,
       selectedMineralId: nextSelectedMineralId,
+      ritualSlotMineralIds: nextRitualSlotMineralIds,
       inventory: nextInventory,
       collection,
     },

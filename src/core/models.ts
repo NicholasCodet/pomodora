@@ -71,6 +71,7 @@ export interface PlayerProgress {
 export interface GameState {
   player: PlayerProgress;
   selectedMineralId: MineralId | null;
+  ritualSlotMineralIds: MineralId[];
   inventory: OwnedMineral[];
   collection: OwnedArtifact[];
 }

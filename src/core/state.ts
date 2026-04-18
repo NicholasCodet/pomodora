@@ -32,6 +32,7 @@ export function createInitialGameState(startingEssence: Essence = STARTING_ESSEN
   return {
     player: createInitialPlayerProgress(startingEssence),
     selectedMineralId: null,
+    ritualSlotMineralIds: [],
     inventory: [],
     collection: [],
   };

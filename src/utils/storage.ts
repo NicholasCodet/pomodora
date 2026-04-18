@@ -1,4 +1,5 @@
 import type { GameState, MaterialType } from '../core/models';
+import { QUICK_SLOT_COUNT } from '../core/constants';
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -29,6 +30,7 @@ export function isValidGameState(value: unknown): value is GameState {
 
   const player = value.player;
   const selectedMineralId = value.selectedMineralId;
+  const ritualSlotMineralIds = value.ritualSlotMineralIds;
   const inventory = value.inventory;
   const collection = value.collection;
 
@@ -53,6 +55,18 @@ export function isValidGameState(value: unknown): value is GameState {
   }
 
   if (!(selectedMineralId === null || typeof selectedMineralId === 'string')) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(ritualSlotMineralIds) ||
+    ritualSlotMineralIds.length > QUICK_SLOT_COUNT ||
+    !ritualSlotMineralIds.every((id) => typeof id === 'string')
+  ) {
+    return false;
+  }
+
+  if (new Set(ritualSlotMineralIds).size !== ritualSlotMineralIds.length) {
     return false;
   }
 
@@ -100,6 +114,14 @@ export function isValidGameState(value: unknown): value is GameState {
     return false;
   }
 
+  if (
+    !ritualSlotMineralIds.every((id) =>
+      inventory.some((item) => isObjectRecord(item) && item.id === id),
+    )
+  ) {
+    return false;
+  }
+
   return true;
 }
 
@@ -109,11 +131,27 @@ export function isValidGameState(value: unknown): value is GameState {
 export function deserializeGameState(raw: string): GameState | null {
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!isValidGameState(parsed)) {
+    const withDefaults = addMissingGameStateDefaults(parsed);
+    if (!isValidGameState(withDefaults)) {
       return null;
     }
-    return parsed;
+    return withDefaults;
   } catch {
     return null;
   }
+}
+
+function addMissingGameStateDefaults(value: unknown): unknown {
+  if (!isObjectRecord(value)) {
+    return value;
+  }
+
+  if (!('ritualSlotMineralIds' in value)) {
+    return {
+      ...value,
+      ritualSlotMineralIds: [],
+    };
+  }
+
+  return value;
 }

@@ -3,14 +3,18 @@
  * UI calls functions from here instead of wiring core/data modules directly.
  */
 import {
+  addRitualSlot as runAddRitualSlot,
   buyAndSelectMineral as runBuyAndSelectMineral,
   completeRitualOnSelectedMineral as runCompleteRitualOnSelectedMineral,
+  getRitualSlotMinerals as buildRitualSlotMinerals,
   getPlayerSummary as buildPlayerSummary,
   getSelectedMineral as findSelectedMineral,
   getShopMaterialStates as buildShopMaterialStates,
+  removeRitualSlot as runRemoveRitualSlot,
   revealSelectedMineralIfComplete as runRevealSelectedMineralIfComplete,
   selectMineral as runSelectMineral,
 } from '../../core/logic';
+import { QUICK_SLOT_COUNT } from '../../core/constants';
 import { getMineralProgressView as buildMineralProgressView } from '../../core/progression';
 import { createInitialGameState } from '../../core/state';
 import type { GameState, MaterialType, MineralId, OwnedMineral, Rarity } from '../../core/models';
@@ -23,6 +27,7 @@ import type {
   RevealSelectedMineralIfCompleteResult,
 } from '../../core/use-cases';
 import type { SelectMineralResult } from '../../core/selection';
+import type { AddRitualSlotResult, RemoveRitualSlotResult } from '../../core/slots';
 import { ARTIFACTS } from '../../data/artifacts';
 import { MATERIAL_DEFINITIONS, MATERIALS } from '../../data/materials';
 import { createId } from '../../utils/id';
@@ -31,6 +36,8 @@ import { deserializeGameState, serializeGameState } from '../../utils/storage';
 export function createGameState(startingEssence = 0): GameState {
   return createInitialGameState(startingEssence);
 }
+
+export const RITUAL_SLOT_LIMIT = QUICK_SLOT_COUNT;
 
 export function loadGameState(raw: string | null | undefined, startingEssence = 0): GameState {
   if (!raw) {
@@ -96,6 +103,18 @@ export function revealSelectedMineral(
     ARTIFACTS,
     now,
   );
+}
+
+export function addRitualSlot(state: GameState, mineralId: MineralId): AddRitualSlotResult {
+  return runAddRitualSlot(state, mineralId);
+}
+
+export function removeRitualSlot(state: GameState, mineralId: MineralId): RemoveRitualSlotResult {
+  return runRemoveRitualSlot(state, mineralId);
+}
+
+export function getRitualSlotMinerals(state: GameState): OwnedMineral[] {
+  return buildRitualSlotMinerals(state);
 }
 
 export interface CollectionArtifactView {

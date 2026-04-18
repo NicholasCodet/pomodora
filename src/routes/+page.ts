@@ -1,4 +1,6 @@
 import type { PageLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
 
-// This page now reads live data from the global sanctuary store.
-export const load: PageLoad = () => ({});
+export const load: PageLoad = () => {
+  throw redirect(307, '/ritual');
+};

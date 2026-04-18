@@ -1,8 +1,10 @@
 import { writable } from 'svelte/store';
 import {
+  addRitualSlot as runAddRitualSlot,
   buyAndSelectMineral,
   completeSelectedRitual as runCompleteSelectedRitual,
   createGameState,
+  removeRitualSlot as runRemoveRitualSlot,
   revealSelectedMineral as runRevealSelectedMineral,
   selectMineral as runSelectMineral,
 } from '$lib/app/sanctuary';
@@ -47,6 +49,28 @@ function createSanctuaryStore(initialEssence = 12) {
         const result = runSelectMineral(state, mineralId);
         actionResult = result;
         console.log(`Select mineral (${mineralId}) result:`, result);
+        return result.ok ? result.state : state;
+      });
+
+      return actionResult;
+    },
+    addRitualSlot(mineralId: MineralId) {
+      let actionResult!: ReturnType<typeof runAddRitualSlot>;
+      update((state) => {
+        const result = runAddRitualSlot(state, mineralId);
+        actionResult = result;
+        console.log(`Add ritual slot (${mineralId}) result:`, result);
+        return result.ok ? result.state : state;
+      });
+
+      return actionResult;
+    },
+    removeRitualSlot(mineralId: MineralId) {
+      let actionResult!: ReturnType<typeof runRemoveRitualSlot>;
+      update((state) => {
+        const result = runRemoveRitualSlot(state, mineralId);
+        actionResult = result;
+        console.log(`Remove ritual slot (${mineralId}) result:`, result);
         return result.ok ? result.state : state;
       });
 
