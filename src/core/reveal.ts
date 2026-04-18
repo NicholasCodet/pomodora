@@ -45,6 +45,14 @@ export function revealArtifactIfComplete(
   artifactDefinitions: readonly ArtifactDefinition[],
   now: () => number = Date.now,
 ): RevealArtifactResult {
+  if (state.collection.some((entry) => entry.sourceMineralId === mineralId)) {
+    return {
+      ok: false,
+      reason: 'already_revealed',
+      state,
+    };
+  }
+
   const mineral = state.inventory.find((entry) => entry.id === mineralId);
   if (!mineral) {
     return {
@@ -132,11 +140,17 @@ export function revealArtifactIfComplete(
         },
       ];
 
+  // Revealed minerals leave actionable inventory and become collection entries.
+  const nextInventory = state.inventory.filter((entry) => entry.id !== mineralId);
+  const nextSelectedMineralId =
+    state.selectedMineralId === mineralId ? nextInventory[0]?.id ?? null : state.selectedMineralId;
+
   return {
     ok: true,
     state: {
       ...state,
-      inventory: state.inventory.map((entry) => (entry.id === mineralId ? updatedMineral : entry)),
+      selectedMineralId: nextSelectedMineralId,
+      inventory: nextInventory,
       collection,
     },
     artifact,

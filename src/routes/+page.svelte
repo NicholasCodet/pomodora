@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import {
+    getCollectionArtifactViews,
     getMineralProgressView,
     getPlayerSummary,
     getSelectedMineral,
@@ -13,6 +14,7 @@
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: playerSummary = getPlayerSummary($sanctuaryStore);
+  $: collectionArtifacts = getCollectionArtifactViews($sanctuaryStore);
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
   $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
@@ -70,7 +72,7 @@
   function handleRevealSelectedMineral(): void {
     const result = sanctuaryStore.revealSelectedMineral();
     lastActionMessage = result.ok
-      ? `Artifact revealed: ${result.artifact.name} (${result.artifact.rarity}). Collection: ${result.state.collection.length}.`
+      ? `Artifact revealed: ${result.artifact.name} (${result.artifact.rarity}). Moved to collection (${result.state.collection.length} total).`
       : `Reveal failed: ${formatFailureReason(result.reason)}.`;
   }
 
@@ -191,10 +193,10 @@
     <h2 id="inventory-heading">Owned Minerals</h2>
 
     {#if inventoryRows.length === 0}
-      <p>No minerals owned yet.</p>
+      <p>No actionable minerals in inventory.</p>
     {:else}
       <table>
-        <caption>Current inventory and active selection</caption>
+        <caption>Actionable inventory and active selection</caption>
         <thead>
           <tr>
             <th scope="col">Mineral ID</th>
@@ -230,6 +232,34 @@
                   {row.isSelected ? 'Selected' : 'Select'}
                 </Button>
               </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+  </section>
+
+  <section aria-labelledby="collection-heading">
+    <h2 id="collection-heading">Collection</h2>
+
+    {#if collectionArtifacts.length === 0}
+      <p>No artifacts revealed yet.</p>
+    {:else}
+      <table>
+        <caption>Discovered artifacts</caption>
+        <thead>
+          <tr>
+            <th scope="col">Artifact</th>
+            <th scope="col">Rarity</th>
+            <th scope="col">Source Material</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each collectionArtifacts as artifact}
+            <tr>
+              <th scope="row">{artifact.name}</th>
+              <td>{artifact.rarity}</td>
+              <td>{artifact.materialType}</td>
             </tr>
           {/each}
         </tbody>

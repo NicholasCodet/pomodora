@@ -13,7 +13,7 @@ import {
 } from '../../core/logic';
 import { getMineralProgressView as buildMineralProgressView } from '../../core/progression';
 import { createInitialGameState } from '../../core/state';
-import type { GameState, MaterialType, MineralId, OwnedMineral } from '../../core/models';
+import type { GameState, MaterialType, MineralId, OwnedMineral, Rarity } from '../../core/models';
 import type { ShopMaterialState } from '../../core/shop';
 import type { PlayerSummary } from '../../core/summary';
 import type { MineralProgressViewResult } from '../../core/progression';
@@ -96,4 +96,28 @@ export function revealSelectedMineral(
     ARTIFACTS,
     now,
   );
+}
+
+export interface CollectionArtifactView {
+  artifactId: string;
+  name: string;
+  rarity: Rarity | 'unknown';
+  materialType: MaterialType | 'unknown';
+  sourceMineralId: string;
+  discoveredAt: number;
+}
+
+export function getCollectionArtifactViews(state: GameState): CollectionArtifactView[] {
+  return state.collection.map((entry) => {
+    const artifact = ARTIFACTS.find((definition) => definition.id === entry.artifactId);
+
+    return {
+      artifactId: entry.artifactId,
+      name: artifact?.name ?? entry.artifactId,
+      rarity: artifact?.rarity ?? 'unknown',
+      materialType: artifact?.materialType ?? 'unknown',
+      sourceMineralId: entry.sourceMineralId,
+      discoveredAt: entry.discoveredAt,
+    };
+  });
 }
