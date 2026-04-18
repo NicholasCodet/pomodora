@@ -1,8 +1,71 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import ShopMaterialTable from '$lib/components/ShopMaterialTable.svelte';
+  import Button from '$lib/components/Button.svelte';
+  import {
+    getMineralProgressView,
+    getSelectedMineral,
+    getShopMaterialStates,
+  } from '$lib/app/game';
+  import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
   export let data: PageData;
+
+  let shopMaterials = getShopMaterialStates($sanctuaryStore);
+  $: shopMaterials = getShopMaterialStates($sanctuaryStore);
+  $: selectedMineral = getSelectedMineral($sanctuaryStore);
+  $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
+  $: canRevealSelected = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
+  $: inventoryRows = $sanctuaryStore.inventory.map((mineral) => ({
+    mineral,
+    progress: getMineralProgressView(mineral),
+    materialLabel: getMaterialLabel(mineral.materialType),
+    isSelected: $sanctuaryStore.selectedMineralId === mineral.id,
+  }));
+
+  function getMaterialLabel(materialType: (typeof shopMaterials)[number]['type']): string {
+    const material = shopMaterials.find((entry) => entry.type === materialType);
+    return material ? material.name : materialType;
+  }
+
+  function getShopStateLabel(material: (typeof shopMaterials)[number]): string {
+    if (material.canPurchase) {
+      return 'available';
+    }
+
+    if (material.blockedReason === 'material_locked') {
+      return 'locked';
+    }
+
+    if (material.blockedReason === 'insufficient_essence') {
+      return 'insufficient';
+    }
+
+    return material.blockedReason ?? 'unavailable';
+  }
+
+  function handleBuyMaterial(materialType: (typeof shopMaterials)[number]['type']): void {
+    sanctuaryStore.buyMineral(materialType);
+  }
+
+  function handleCompleteRitual(minutes: number): void {
+    sanctuaryStore.completeSelectedRitual(minutes);
+  }
+
+  function handleSelectMineral(mineralId: string): void {
+    sanctuaryStore.selectMineral(mineralId);
+  }
+
+  function handleRevealSelectedMineral(): void {
+    sanctuaryStore.revealSelectedMineral();
+  }
+
+  function formatMineralId(mineralId: string): string {
+    if (mineralId.length <= 14) {
+      return mineralId;
+    }
+
+    return `${mineralId.slice(0, 14)}...`;
+  }
 </script>
 
 <svelte:head>
@@ -12,8 +75,26 @@
 <main>
   <header>
     <h1>Pomodora Sanctuary</h1>
-    <p>Read-only SvelteKit snapshot powered by the TypeScript domain layer.</p>
+    <p>SvelteKit snapshot powered by the TypeScript domain layer.</p>
   </header>
+
+  <section aria-labelledby="local-state-heading">
+    <h2 id="local-state-heading">Global Store State</h2>
+    <dl class="summary-grid">
+      <div>
+        <dt>Essence</dt>
+        <dd>{$sanctuaryStore.player.essence}</dd>
+      </div>
+      <div>
+        <dt>Inventory Count</dt>
+        <dd>{$sanctuaryStore.inventory.length}</dd>
+      </div>
+      <div>
+        <dt>Selected Mineral ID</dt>
+        <dd>{$sanctuaryStore.selectedMineralId ?? 'none'}</dd>
+      </div>
+    </dl>
+  </section>
 
   <section aria-labelledby="summary-heading">
     <h2 id="summary-heading">Player Summary</h2>
@@ -46,44 +127,155 @@
   </section>
 
   <section aria-labelledby="shop-heading">
-    <h2 id="shop-heading">Shop Material States</h2>
-    <ShopMaterialTable materials={data.shopMaterials} />
+    <h2 id="shop-heading">Workshop</h2>
+    <table>
+      <caption>Available materials</caption>
+      <thead>
+        <tr>
+          <th scope="col">Material</th>
+          <th scope="col">Cost</th>
+          <th scope="col">State</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each shopMaterials as material}
+          <tr>
+            <th scope="row">{material.name}</th>
+            <td>{material.cost}</td>
+            <td>{getShopStateLabel(material)}</td>
+            <td>
+              <Button
+                variant="secondary"
+                disabled={!material.canPurchase}
+                on:click={() => handleBuyMaterial(material.type)}
+              >
+                Buy
+              </Button>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
   </section>
 
-  <section aria-labelledby="selected-heading">
-    <h2 id="selected-heading">Selected Mineral Progress</h2>
+  <section aria-labelledby="inventory-heading">
+    <h2 id="inventory-heading">Owned Minerals</h2>
 
-    {#if data.selectedMineral === null}
-      <p>No mineral is currently selected.</p>
-    {:else if data.selectedProgress?.ok}
+    {#if inventoryRows.length === 0}
+      <p>No minerals owned yet.</p>
+    {:else}
+      <table>
+        <caption>Current inventory and active selection</caption>
+        <thead>
+          <tr>
+            <th scope="col">Mineral ID</th>
+            <th scope="col">Material</th>
+            <th scope="col">Worked Minutes</th>
+            <th scope="col">Stage</th>
+            <th scope="col">Selected</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each inventoryRows as row}
+            <tr>
+              <td>
+                <code title={row.mineral.id}>{formatMineralId(row.mineral.id)}</code>
+              </td>
+              <td>{row.materialLabel}</td>
+              <td>{row.mineral.workedMinutes}</td>
+              <td>
+                {#if row.progress.ok}
+                  {row.progress.view.currentStage} / {row.progress.view.stageCount}
+                {:else}
+                  unavailable ({row.progress.reason})
+                {/if}
+              </td>
+              <td>{row.isSelected ? 'Yes (active)' : 'No'}</td>
+              <td>
+                <Button
+                  variant={row.isSelected ? 'primary' : 'secondary'}
+                  disabled={row.isSelected}
+                  on:click={() => handleSelectMineral(row.mineral.id)}
+                >
+                  {row.isSelected ? 'Selected' : 'Select'}
+                </Button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+  </section>
+
+  <section aria-labelledby="ritual-heading">
+    <h2 id="ritual-heading">Ritual</h2>
+
+    {#if selectedMineral === null}
+      <p>No mineral selected.</p>
+    {:else if selectedProgress?.ok}
       <dl class="summary-grid">
         <div>
-          <dt>Material Type</dt>
-          <dd>{data.selectedProgress.view.materialType}</dd>
+          <dt>Selected Mineral ID</dt>
+          <dd>{selectedMineral.id}</dd>
+        </div>
+        <div>
+          <dt>Material</dt>
+          <dd>{getMaterialLabel(selectedProgress.view.materialType)}</dd>
         </div>
         <div>
           <dt>Stage</dt>
-          <dd>{data.selectedProgress.view.currentStage} / {data.selectedProgress.view.stageCount}</dd>
+          <dd>{selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}</dd>
         </div>
         <div>
           <dt>Worked Minutes</dt>
-          <dd>{data.selectedProgress.view.workedMinutes}</dd>
+          <dd>{selectedProgress.view.workedMinutes}</dd>
         </div>
         <div>
           <dt>Next Threshold</dt>
-          <dd>{data.selectedProgress.view.nextThreshold ?? 'none'}</dd>
+          <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
         </div>
         <div>
           <dt>Remaining Minutes</dt>
-          <dd>{data.selectedProgress.view.remainingMinutesToNextStage ?? 'none'}</dd>
+          <dd>{selectedProgress.view.remainingMinutesToNextStage ?? 'none'}</dd>
         </div>
         <div>
           <dt>Completed</dt>
-          <dd>{data.selectedProgress.view.isCompleted ? 'Yes' : 'No'}</dd>
+          <dd>{selectedProgress.view.isCompleted ? 'Yes' : 'No'}</dd>
         </div>
       </dl>
+
+      <div class="ritual-actions">
+        <p class="ritual-actions-label">Complete fixed ritual:</p>
+        <Button variant="primary" on:click={() => handleCompleteRitual(15)}>
+          Complete 15 min ritual
+        </Button>
+        <Button variant="primary" on:click={() => handleCompleteRitual(30)}>
+          Complete 30 min ritual
+        </Button>
+        <Button variant="primary" on:click={() => handleCompleteRitual(45)}>
+          Complete 45 min ritual
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={!canRevealSelected}
+          on:click={handleRevealSelectedMineral}
+        >
+          Reveal artifact
+        </Button>
+      </div>
+
+      {#if !canRevealSelected}
+        <p class="ritual-helper">
+          Complete the mineral before revealing.
+          {#if selectedProgress.view.remainingMinutesToNextStage !== null}
+            Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
+          {/if}
+        </p>
+      {/if}
     {:else}
-      <p>Unable to compute selected mineral progress: {data.selectedProgress?.reason}</p>
+      <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
     {/if}
   </section>
 </main>
@@ -92,29 +284,29 @@
   :global(body) {
     margin: 0;
     font-family: 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
-    background: #f8fafc;
-    color: #111827;
+    background: var(--color-background);
+    color: var(--color-text);
   }
 
   main {
     margin: 0 auto;
     max-width: 72rem;
-    padding: 1.5rem;
+    padding: var(--space-4);
     display: grid;
-    gap: 1.5rem;
+    gap: var(--space-4);
   }
 
   header,
   section {
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    padding: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
   }
 
   h1,
   h2 {
-    margin: 0 0 0.75rem;
+    margin: 0 0 var(--space-2);
     line-height: 1.2;
   }
 
@@ -124,25 +316,61 @@
 
   .summary-grid {
     display: grid;
-    gap: 0.75rem;
+    gap: var(--space-2);
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   }
 
   .summary-grid div {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    padding: 0.75rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2);
   }
 
   dt {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #374151;
+    color: var(--color-muted-text);
   }
 
   dd {
     margin: 0.25rem 0 0;
     font-size: 1rem;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  caption {
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+    text-align: left;
+  }
+
+  th,
+  td {
+    border: 1px solid var(--color-border);
+    padding: var(--space-1) var(--space-2);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .ritual-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  .ritual-actions-label {
+    flex-basis: 100%;
+    font-weight: 600;
+  }
+
+  .ritual-helper {
+    margin-top: var(--space-2);
+    color: var(--color-muted-text);
   }
 </style>

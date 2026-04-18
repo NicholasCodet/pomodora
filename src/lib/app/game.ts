@@ -4,9 +4,11 @@
  */
 import {
   buyAndSelectMineral as runBuyAndSelectMineral,
+  completeRitualOnSelectedMineral as runCompleteRitualOnSelectedMineral,
   getPlayerSummary as buildPlayerSummary,
   getSelectedMineral as findSelectedMineral,
   getShopMaterialStates as buildShopMaterialStates,
+  revealSelectedMineralIfComplete as runRevealSelectedMineralIfComplete,
   selectMineral as runSelectMineral,
 } from '../../core/logic';
 import { getMineralProgressView as buildMineralProgressView } from '../../core/progression';
@@ -15,8 +17,13 @@ import type { GameState, MaterialType, MineralId, OwnedMineral } from '../../cor
 import type { ShopMaterialState } from '../../core/shop';
 import type { PlayerSummary } from '../../core/summary';
 import type { MineralProgressViewResult } from '../../core/progression';
-import type { BuyAndSelectMineralResult } from '../../core/use-cases';
+import type {
+  BuyAndSelectMineralResult,
+  CompleteRitualOnSelectedMineralResult,
+  RevealSelectedMineralIfCompleteResult,
+} from '../../core/use-cases';
 import type { SelectMineralResult } from '../../core/selection';
+import { ARTIFACTS } from '../../data/artifacts';
 import { MATERIAL_DEFINITIONS, MATERIALS } from '../../data/materials';
 import { createId } from '../../utils/id';
 import { deserializeGameState, serializeGameState } from '../../utils/storage';
@@ -70,4 +77,23 @@ export function getSelectedMineral(state: GameState): OwnedMineral | null {
 
 export function getMineralProgressView(mineral: OwnedMineral): MineralProgressViewResult {
   return buildMineralProgressView(mineral, MATERIAL_DEFINITIONS[mineral.materialType]);
+}
+
+export function completeSelectedRitual(
+  state: GameState,
+  minutes: number,
+): CompleteRitualOnSelectedMineralResult {
+  return runCompleteRitualOnSelectedMineral(state, minutes, MATERIAL_DEFINITIONS);
+}
+
+export function revealSelectedMineral(
+  state: GameState,
+  now: () => number = Date.now,
+): RevealSelectedMineralIfCompleteResult {
+  return runRevealSelectedMineralIfComplete(
+    state,
+    MATERIAL_DEFINITIONS,
+    ARTIFACTS,
+    now,
+  );
 }
