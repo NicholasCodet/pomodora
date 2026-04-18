@@ -5,7 +5,7 @@ import {
   createGameState,
   revealSelectedMineral as runRevealSelectedMineral,
   selectMineral as runSelectMineral,
-} from '$lib/app/game';
+} from '$lib/app/sanctuary';
 import type { GameState, MaterialType, MineralId } from '../../core/models';
 
 function createSanctuaryStore(initialEssence = 12) {

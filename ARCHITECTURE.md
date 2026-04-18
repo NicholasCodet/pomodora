@@ -29,7 +29,7 @@ src/
     artifacts.ts
   lib/
     app/
-      game.ts
+      sanctuary.ts
     components/
       ShopMaterialTable.svelte
     stores/
@@ -63,14 +63,14 @@ Core stays framework-agnostic and owns business rules.
 
 ## App Bridge (`src/lib/app`)
 
-- `game.ts`: UI-facing application boundary.
+- `sanctuary.ts`: UI-facing application boundary.
 - It composes domain/data/util functions for SvelteKit routes/components.
 - It must stay thin and never duplicate business rules.
 
 ## UI Layer (`src/routes`, `src/lib/components`)
 
 - Routes and components render data and handle interaction concerns.
-- UI reads/dispatches through `src/lib/app/game.ts`.
+- UI reads/dispatches through `src/lib/app/sanctuary.ts`.
 - Domain rules remain in `src/core`.
 
 ## Data Layer (`src/data`)

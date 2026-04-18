@@ -6,7 +6,7 @@
     getPlayerSummary,
     getSelectedMineral,
     getShopMaterialStates,
-  } from '$lib/app/game';
+  } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
   let shopMaterials = getShopMaterialStates($sanctuaryStore);

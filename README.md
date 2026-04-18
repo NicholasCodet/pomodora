@@ -145,7 +145,7 @@ Current working flow includes:
 - persistence serialization/validation helpers
 
 `src/index.ts` is used as an integration sandbox to validate scenarios and edge cases.
-SvelteKit currently exposes a minimal read-only page through a thin app bridge (`src/lib/app/game.ts`).
+SvelteKit currently exposes a minimal read-only page through a thin app bridge (`src/lib/app/sanctuary.ts`).
 
 ---
 
