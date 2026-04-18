@@ -11,10 +11,14 @@
   export let data: PageData;
 
   let shopMaterials = getShopMaterialStates($sanctuaryStore);
+  let lastActionMessage = '';
+
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
-  $: canRevealSelected = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
+  $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
+  $: isSelectedRevealed = selectedMineral !== null ? selectedMineral.revealedAt !== null : false;
+  $: canRevealSelected = isSelectedCompleted && !isSelectedRevealed;
   $: inventoryRows = $sanctuaryStore.inventory.map((mineral) => ({
     mineral,
     progress: getMineralProgressView(mineral),
@@ -44,19 +48,31 @@
   }
 
   function handleBuyMaterial(materialType: (typeof shopMaterials)[number]['type']): void {
-    sanctuaryStore.buyMineral(materialType);
+    const result = sanctuaryStore.buyMineral(materialType);
+    lastActionMessage = result.ok
+      ? `Bought and selected ${result.material.name}.`
+      : `Buy failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function handleCompleteRitual(minutes: number): void {
-    sanctuaryStore.completeSelectedRitual(minutes);
+    const result = sanctuaryStore.completeSelectedRitual(minutes);
+    lastActionMessage = result.ok
+      ? `Ritual complete: +${minutes} min, +${result.essenceGain} Essence.`
+      : `Ritual failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function handleSelectMineral(mineralId: string): void {
-    sanctuaryStore.selectMineral(mineralId);
+    const result = sanctuaryStore.selectMineral(mineralId);
+    lastActionMessage = result.ok
+      ? `Selected mineral ${formatMineralId(result.mineral.id)}.`
+      : `Selection failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function handleRevealSelectedMineral(): void {
-    sanctuaryStore.revealSelectedMineral();
+    const result = sanctuaryStore.revealSelectedMineral();
+    lastActionMessage = result.ok
+      ? `Artifact revealed: ${result.artifact.name} (${result.artifact.rarity}). Collection: ${result.state.collection.length}.`
+      : `Reveal failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function formatMineralId(mineralId: string): string {
@@ -65,6 +81,10 @@
     }
 
     return `${mineralId.slice(0, 14)}...`;
+  }
+
+  function formatFailureReason(reason: string): string {
+    return reason.replaceAll('_', ' ');
   }
 </script>
 
@@ -93,7 +113,16 @@
         <dt>Selected Mineral ID</dt>
         <dd>{$sanctuaryStore.selectedMineralId ?? 'none'}</dd>
       </div>
+      <div>
+        <dt>Collection Count</dt>
+        <dd>{$sanctuaryStore.collection.length}</dd>
+      </div>
     </dl>
+  </section>
+
+  <section aria-labelledby="feedback-heading">
+    <h2 id="feedback-heading">Last Action</h2>
+    <p>{lastActionMessage || 'No action yet.'}</p>
   </section>
 
   <section aria-labelledby="summary-heading">
@@ -248,13 +277,25 @@
 
       <div class="ritual-actions">
         <p class="ritual-actions-label">Complete fixed ritual:</p>
-        <Button variant="primary" on:click={() => handleCompleteRitual(15)}>
+        <Button
+          variant="primary"
+          disabled={isSelectedCompleted}
+          on:click={() => handleCompleteRitual(15)}
+        >
           Complete 15 min ritual
         </Button>
-        <Button variant="primary" on:click={() => handleCompleteRitual(30)}>
+        <Button
+          variant="primary"
+          disabled={isSelectedCompleted}
+          on:click={() => handleCompleteRitual(30)}
+        >
           Complete 30 min ritual
         </Button>
-        <Button variant="primary" on:click={() => handleCompleteRitual(45)}>
+        <Button
+          variant="primary"
+          disabled={isSelectedCompleted}
+          on:click={() => handleCompleteRitual(45)}
+        >
           Complete 45 min ritual
         </Button>
         <Button
@@ -266,7 +307,11 @@
         </Button>
       </div>
 
-      {#if !canRevealSelected}
+      {#if isSelectedRevealed}
+        <p class="ritual-helper">Artifact already revealed for this mineral.</p>
+      {:else if isSelectedCompleted}
+        <p class="ritual-helper">This mineral is fully refined. Reveal its artifact.</p>
+      {:else if !canRevealSelected}
         <p class="ritual-helper">
           Complete the mineral before revealing.
           {#if selectedProgress.view.remainingMinutesToNextStage !== null}
