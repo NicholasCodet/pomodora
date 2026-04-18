@@ -1,19 +1,18 @@
 <script lang="ts">
-  import type { PageData } from './$types';
   import Button from '$lib/components/Button.svelte';
   import {
     getMineralProgressView,
+    getPlayerSummary,
     getSelectedMineral,
     getShopMaterialStates,
   } from '$lib/app/game';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
-  export let data: PageData;
-
   let shopMaterials = getShopMaterialStates($sanctuaryStore);
   let lastActionMessage = '';
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
+  $: playerSummary = getPlayerSummary($sanctuaryStore);
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
   $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
@@ -130,27 +129,27 @@
     <dl class="summary-grid">
       <div>
         <dt>Essence</dt>
-        <dd>{data.summary.essence}</dd>
+        <dd>{playerSummary.essence}</dd>
       </div>
       <div>
         <dt>Completed Rituals</dt>
-        <dd>{data.summary.completedRituals}</dd>
+        <dd>{playerSummary.completedRituals}</dd>
       </div>
       <div>
         <dt>Total Worked Minutes</dt>
-        <dd>{data.summary.totalWorkedMinutes}</dd>
+        <dd>{playerSummary.totalWorkedMinutes}</dd>
       </div>
       <div>
         <dt>Unlocked Materials</dt>
-        <dd>{data.summary.unlockedMaterialTypes.join(', ')}</dd>
+        <dd>{playerSummary.unlockedMaterialTypes.join(', ')}</dd>
       </div>
       <div>
         <dt>Collection Count</dt>
-        <dd>{data.summary.collectionCount}</dd>
+        <dd>{playerSummary.collectionCount}</dd>
       </div>
       <div>
         <dt>Selected Mineral ID</dt>
-        <dd>{data.summary.selectedMineralId ?? 'none'}</dd>
+        <dd>{playerSummary.selectedMineralId ?? 'none'}</dd>
       </div>
     </dl>
   </section>
