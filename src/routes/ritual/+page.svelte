@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dev } from '$app/environment';
   import Button from '$lib/components/Button.svelte';
   import {
     getRitualSlotMinerals,
@@ -11,6 +12,13 @@
   let lastActionMessage = '';
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
+  $: ritualRuntime = $sanctuaryStore.ritualRuntime;
+  $: ritualIsRunning = ritualRuntime.isRunning;
+  $: ritualRemainingMs =
+    ritualRuntime.isRunning && ritualRuntime.endTimestamp !== null
+      ? Math.max(0, ritualRuntime.endTimestamp - ritualRuntime.tickNowTimestamp)
+      : 0;
+  $: ritualRemainingLabel = formatRemainingDuration(ritualRemainingMs);
   $: ritualSlots = getRitualSlotMinerals($sanctuaryStore);
   $: ritualSlotRows = ritualSlots.map((mineral) => ({
     mineral,
@@ -28,10 +36,17 @@
   }
 
   function handleCompleteRitual(minutes: number): void {
-    const result = sanctuaryStore.completeSelectedRitual(minutes);
+    const result = sanctuaryStore.startRitual(minutes);
     lastActionMessage = result.ok
-      ? `Ritual complete: +${minutes} min, +${result.essenceGain} Essence.`
-      : `Ritual failed: ${formatFailureReason(result.reason)}.`;
+      ? `Ritual started for ${minutes} minutes.`
+      : `Ritual start failed: ${formatFailureReason(result.reason)}.`;
+  }
+
+  function handleCancelRitual(): void {
+    const result = sanctuaryStore.cancelRitual();
+    lastActionMessage = result.ok
+      ? 'Ritual canceled. No progress was applied.'
+      : `Cancel failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function handleRevealSelectedMineral(): void {
@@ -48,8 +63,22 @@
       : `Slot selection failed: ${formatFailureReason(result.reason)}.`;
   }
 
+  function handleCompleteInstantDebug(): void {
+    const result = sanctuaryStore.completeRitualInstantDebug();
+    lastActionMessage = result.ok
+      ? `Debug complete: +${result.essenceGain} Essence applied instantly.`
+      : `Debug complete failed: ${formatFailureReason(result.reason)}.`;
+  }
+
   function formatFailureReason(reason: string): string {
     return reason.replaceAll('_', ' ');
+  }
+
+  function formatRemainingDuration(remainingMs: number): string {
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 </script>
 
@@ -77,7 +106,7 @@
             </p>
             <Button
               variant={slot.isSelected ? 'primary' : 'secondary'}
-              disabled={slot.isSelected}
+              disabled={slot.isSelected || ritualIsRunning}
               on:click={() => handleSelectRitualSlot(slot.mineral.id)}
             >
               {slot.isSelected ? 'Active' : 'Use for Ritual'}
@@ -123,26 +152,45 @@
     </dl>
 
     <div class="ritual-actions">
-      <p class="ritual-actions-label">Complete fixed ritual:</p>
-      <Button variant="primary" disabled={isSelectedCompleted} on:click={() => handleCompleteRitual(15)}>
-        Complete 15 min ritual
+      <p class="ritual-actions-label">Start ritual:</p>
+      <Button
+        variant="primary"
+        disabled={ritualIsRunning || isSelectedCompleted}
+        on:click={() => handleCompleteRitual(15)}
+      >
+        Start 15 min ritual
       </Button>
-      <Button variant="primary" disabled={isSelectedCompleted} on:click={() => handleCompleteRitual(30)}>
-        Complete 30 min ritual
+      <Button
+        variant="primary"
+        disabled={ritualIsRunning || isSelectedCompleted}
+        on:click={() => handleCompleteRitual(30)}
+      >
+        Start 30 min ritual
       </Button>
-      <Button variant="primary" disabled={isSelectedCompleted} on:click={() => handleCompleteRitual(45)}>
-        Complete 45 min ritual
+      <Button
+        variant="primary"
+        disabled={ritualIsRunning || isSelectedCompleted}
+        on:click={() => handleCompleteRitual(45)}
+      >
+        Start 45 min ritual
+      </Button>
+      <Button variant="secondary" disabled={!ritualIsRunning} on:click={handleCancelRitual}>
+        Cancel ritual
       </Button>
       <Button
         variant="secondary"
-        disabled={!isSelectedCompleted}
+        disabled={!isSelectedCompleted || ritualIsRunning}
         on:click={handleRevealSelectedMineral}
       >
         Reveal artifact
       </Button>
     </div>
 
-    {#if isSelectedCompleted}
+    {#if ritualIsRunning}
+      <p class="ritual-helper">
+        Ritual running ({ritualRuntime.durationMinutes} min). Time remaining: {ritualRemainingLabel}.
+      </p>
+    {:else if isSelectedCompleted}
       <p class="ritual-helper">This mineral is fully refined. Reveal its artifact.</p>
     {:else}
       <p class="ritual-helper">
@@ -151,6 +199,15 @@
           Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
         {/if}
       </p>
+    {/if}
+
+    {#if dev}
+      <div class="debug-actions">
+        <p class="ritual-actions-label">Debug tools (development only):</p>
+        <Button variant="secondary" on:click={handleCompleteInstantDebug}>
+          Complete instantly (debug)
+        </Button>
+      </div>
     {/if}
   {:else}
     <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
@@ -224,6 +281,13 @@
   .ritual-helper {
     margin-top: var(--space-2);
     color: var(--color-muted-text);
+  }
+
+  .debug-actions {
+    margin-top: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
 
   .slot-panel {

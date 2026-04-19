@@ -13,6 +13,7 @@
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: collectionArtifacts = getCollectionArtifactViews($sanctuaryStore);
+  $: ritualIsRunning = $sanctuaryStore.ritualRuntime.isRunning;
   $: ritualSlotMineralIds = $sanctuaryStore.ritualSlotMineralIds;
   $: ritualSlotLimitReached = ritualSlotMineralIds.length >= RITUAL_SLOT_LIMIT;
   $: inventoryRows = $sanctuaryStore.inventory.map((mineral) => ({
@@ -95,6 +96,9 @@
       <p class="section-intro">
         Ritual Slots: {ritualSlotMineralIds.length}/{RITUAL_SLOT_LIMIT}
       </p>
+      {#if ritualIsRunning}
+        <p class="slot-helper">Selection is locked while a ritual is running.</p>
+      {/if}
       {#if ritualSlotLimitReached}
         <p class="slot-helper">Ritual Slots are full. Remove one to add another mineral.</p>
       {/if}
@@ -134,7 +138,7 @@
                 <td>
                   <Button
                     variant={row.isSelected ? 'primary' : 'secondary'}
-                    disabled={row.isSelected}
+                    disabled={row.isSelected || ritualIsRunning}
                     on:click={() => handleSelectMineral(row.mineral.id)}
                   >
                     {row.isSelected ? 'Selected' : 'Select'}
