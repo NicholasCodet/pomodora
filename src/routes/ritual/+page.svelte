@@ -114,8 +114,10 @@
 </svelte:head>
 
 <section aria-labelledby="ritual-heading" class="panel ritual-panel">
-  <h1 id="ritual-heading">Ritual</h1>
-  <p class="section-intro">Focus sessions refine the currently active mineral.</p>
+  <header>
+    <h1 id="ritual-heading">Ritual</h1>
+    <p class="section-intro">Focus sessions refine the currently active mineral.</p>
+  </header>
 
   {#if ritualIsRunning}
     <section aria-labelledby="countdown-heading" class="timer-hero">
@@ -144,58 +146,24 @@
     </section>
   {/if}
 
-  <section aria-labelledby="ritual-slots-heading" class="slot-panel">
-    <h2 id="ritual-slots-heading">Ritual Slots</h2>
-    {#if ritualSlotRows.length === 0}
-      <p>No Ritual Slots configured. Add them in Vault &gt; Materials.</p>
-    {:else}
-      <ul class="slot-list">
-        {#each ritualSlotRows as slot}
-          <li class="slot-item">
-            <p>
-              <strong>{slot.materialLabel}</strong>
-              <span class="slot-meta">
-                ({slot.progress.ok
-                  ? `stage ${slot.progress.view.currentStage}/${slot.progress.view.stageCount}, ${slot.progress.view.workedMinutes} min`
-                  : 'progress unavailable'})
-              </span>
-            </p>
-            <Button
-              variant={slot.isSelected ? 'primary' : 'secondary'}
-              disabled={slot.isSelected || ritualIsRunning}
-              on:click={() => handleSelectRitualSlot(slot.mineral.id)}
-            >
-              {slot.isSelected ? 'Active' : 'Use for Ritual'}
-            </Button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </section>
+  <section aria-labelledby="selected-mineral-heading" class="primary-panel">
+    <h2 id="selected-mineral-heading">Selected Mineral</h2>
 
-  {#if selectedMineral === null}
-    <section aria-labelledby="ritual-empty-heading" class="empty-panel">
-      <h2 id="ritual-empty-heading">Selected Mineral</h2>
+    {#if selectedMineral === null}
       {#if hasInventory}
         <p>No active mineral is currently available for ritual.</p>
-        <p class="empty-hint">Open Vault to select one manually, or use Ritual Slots for quick access.</p>
+        <p class="hint-text">Open Vault to select one manually, or use Ritual Slots for quick access.</p>
       {:else}
         <p>No mineral ready for ritual. Visit Workshop to buy one.</p>
-        <p class="empty-hint"><a href="/workshop">Go to Workshop</a></p>
+        <p class="hint-text"><a href="/workshop">Go to Workshop</a></p>
       {/if}
-    </section>
-  {:else if selectedProgress?.ok}
-    <section aria-labelledby="selected-mineral-heading" class="progress-panel">
-      <h2 id="selected-mineral-heading">Selected Mineral</h2>
+    {:else if selectedProgress?.ok}
+      <p class="mineral-title">
+        <strong>{getMaterialLabel(selectedProgress.view.materialType)}</strong>
+        <span class="hint-text">({selectedMineral.id})</span>
+      </p>
+
       <dl class="summary-grid">
-        <div>
-          <dt>Selected Mineral ID</dt>
-          <dd>{selectedMineral.id}</dd>
-        </div>
-        <div>
-          <dt>Material</dt>
-          <dd>{getMaterialLabel(selectedProgress.view.materialType)}</dd>
-        </div>
         <div>
           <dt>Stage</dt>
           <dd>{selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}</dd>
@@ -218,8 +186,7 @@
         </div>
       </dl>
 
-      <div class="ritual-actions">
-        <p class="ritual-actions-label">Start ritual:</p>
+      <div class="ritual-actions" aria-label="Ritual actions">
         <Button
           variant="primary"
           disabled={ritualIsRunning || isSelectedCompleted}
@@ -254,13 +221,13 @@
       </div>
 
       {#if ritualIsRunning}
-        <p class="ritual-helper">
+        <p class="hint-text">
           Ritual running ({ritualRuntime.durationMinutes} min). Time remaining: {ritualRemainingLabel}.
         </p>
       {:else if isSelectedCompleted}
-        <p class="ritual-helper">This mineral is fully refined. Reveal its artifact.</p>
+        <p class="hint-text">This mineral is fully refined. Reveal its artifact.</p>
       {:else}
-        <p class="ritual-helper">
+        <p class="hint-text">
           Complete the mineral before revealing.
           {#if selectedProgress.view.remainingMinutesToNextStage !== null}
             Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
@@ -270,21 +237,50 @@
 
       {#if dev}
         <div class="debug-actions">
-          <p class="ritual-actions-label">Debug tools (development only):</p>
+          <p class="hint-text">Debug tools (development only)</p>
           <Button variant="secondary" on:click={handleCompleteInstantDebug}>
             Complete instantly (debug)
           </Button>
         </div>
       {/if}
-    </section>
-  {:else}
-    <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
-  {/if}
-</section>
+    {:else}
+      <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
+    {/if}
+  </section>
 
-<section aria-labelledby="last-action-heading" class="panel">
-  <h2 id="last-action-heading">Last Action</h2>
-  <p>{lastActionMessage || 'No action yet.'}</p>
+  <section aria-labelledby="ritual-slots-heading" class="support-panel">
+    <h2 id="ritual-slots-heading">Ritual Slots</h2>
+    {#if ritualSlotRows.length === 0}
+      <p>No Ritual Slots configured. Add them in Vault &gt; Materials.</p>
+    {:else}
+      <ul class="slot-list">
+        {#each ritualSlotRows as slot}
+          <li class="slot-item">
+            <p>
+              <strong>{slot.materialLabel}</strong>
+              <span class="slot-meta">
+                {slot.progress.ok
+                  ? `stage ${slot.progress.view.currentStage}/${slot.progress.view.stageCount}, ${slot.progress.view.workedMinutes} min`
+                  : 'progress unavailable'}
+              </span>
+            </p>
+            <Button
+              variant={slot.isSelected ? 'primary' : 'secondary'}
+              disabled={slot.isSelected || ritualIsRunning}
+              on:click={() => handleSelectRitualSlot(slot.mineral.id)}
+            >
+              {slot.isSelected ? 'Active' : 'Use for Ritual'}
+            </Button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+
+  <section aria-labelledby="last-action-heading" class="last-action-panel">
+    <h2 id="last-action-heading">Last Action</h2>
+    <p>{lastActionMessage || 'No action yet.'}</p>
+  </section>
 </section>
 
 <style>
@@ -310,18 +306,27 @@
     margin: 0;
   }
 
-  .section-intro {
+  .section-intro,
+  .hint-text,
+  .timer-status {
     color: var(--color-muted-text);
   }
 
-  .timer-hero {
-    background: var(--color-background);
+  .timer-hero,
+  .idle-status,
+  .primary-panel,
+  .support-panel,
+  .last-action-panel {
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2);
     display: grid;
-    justify-items: center;
     gap: var(--space-2);
+    background: var(--color-background);
+  }
+
+  .timer-hero {
+    justify-items: center;
     text-align: center;
   }
 
@@ -369,38 +374,50 @@
     letter-spacing: 0.04em;
   }
 
-  .timer-status {
-    color: var(--color-muted-text);
-    font-weight: 600;
+  .mineral-title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    align-items: baseline;
   }
 
-  .idle-status {
+  .summary-grid {
+    display: grid;
+    gap: var(--space-2);
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .summary-grid div {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-2);
-    display: grid;
-    gap: var(--space-1);
   }
 
-  .slot-panel,
-  .progress-panel,
-  .empty-panel {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-background);
-    padding: var(--space-2);
+  dt {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted-text);
+  }
+
+  dd {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .ritual-actions {
     display: grid;
     gap: var(--space-2);
   }
 
-  .empty-hint {
-    color: var(--color-muted-text);
+  .ritual-actions :global(button) {
+    width: 100%;
   }
 
-  .empty-hint a {
-    color: var(--color-primary);
-    font-weight: 600;
+  .debug-actions {
+    display: grid;
+    gap: var(--space-1);
   }
 
   .slot-list {
@@ -415,60 +432,33 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: grid;
     gap: var(--space-2);
   }
 
   .slot-meta {
+    display: block;
+    margin-top: 0.25rem;
     color: var(--color-muted-text);
     font-size: 0.875rem;
-    margin-left: var(--space-1);
   }
 
-  .summary-grid {
-    display: grid;
-    gap: var(--space-2);
-    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  }
-
-  .summary-grid div {
+  .last-action-panel {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2);
   }
 
-  dt {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-muted-text);
-  }
+  @media (min-width: 40rem) {
+    .slot-item {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
 
-  dd {
-    margin: 0.25rem 0 0;
-    font-size: 1rem;
-  }
+    .ritual-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-  .ritual-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  .ritual-actions-label {
-    flex-basis: 100%;
-    font-weight: 600;
-  }
-
-  .ritual-helper {
-    color: var(--color-muted-text);
-  }
-
-  .debug-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
+    .ritual-actions :global(button) {
+      width: auto;
+    }
   }
 </style>

@@ -67,75 +67,83 @@
   <title>Vault | Pomodora Sanctuary</title>
 </svelte:head>
 
-<section aria-labelledby="vault-heading" class="panel">
-  <h1 id="vault-heading">Vault</h1>
-  <p class="section-intro">Manage your current materials and discovered artifacts.</p>
+<section aria-labelledby="vault-heading" class="panel vault-panel">
+  <header>
+    <h1 id="vault-heading">Vault</h1>
+    <p class="section-intro">Manage your current materials and discovered artifacts.</p>
+  </header>
 
-  <div class="vault-switch" role="group" aria-label="Vault view">
-    <Button
-      variant={vaultView === 'materials' ? 'primary' : 'secondary'}
-      on:click={() => {
-        vaultView = 'materials';
-      }}
-    >
-      Materials{#if vaultView === 'materials'} (current){/if}
-    </Button>
-    <Button
-      variant={vaultView === 'collection' ? 'primary' : 'secondary'}
-      on:click={() => {
-        vaultView = 'collection';
-      }}
-    >
-      Collection{#if vaultView === 'collection'} (current){/if}
-    </Button>
-  </div>
+  <section aria-labelledby="vault-view-heading" class="switch-panel">
+    <h2 id="vault-view-heading">View</h2>
+    <div class="vault-switch" role="group" aria-label="Vault view">
+      <Button
+        variant={vaultView === 'materials' ? 'primary' : 'secondary'}
+        on:click={() => {
+          vaultView = 'materials';
+        }}
+      >
+        Materials{#if vaultView === 'materials'} (current){/if}
+      </Button>
+      <Button
+        variant={vaultView === 'collection' ? 'primary' : 'secondary'}
+        on:click={() => {
+          vaultView = 'collection';
+        }}
+      >
+        Collection{#if vaultView === 'collection'} (current){/if}
+      </Button>
+    </div>
+  </section>
 
   {#if vaultView === 'materials'}
-    <section aria-labelledby="materials-heading" class="subsection">
+    <section aria-labelledby="materials-heading" class="content-panel">
       <h2 id="materials-heading">Materials</h2>
-      <p class="section-intro">
-        Ritual Slots: {ritualSlotMineralIds.length}/{RITUAL_SLOT_LIMIT}
-      </p>
+      <p class="section-intro">Ritual Slots: {ritualSlotMineralIds.length}/{RITUAL_SLOT_LIMIT}</p>
       {#if ritualIsRunning}
-        <p class="slot-helper">Selection is locked while a ritual is running.</p>
+        <p class="hint-text">Selection is locked while a ritual is running.</p>
       {/if}
       {#if ritualSlotLimitReached}
-        <p class="slot-helper">Ritual Slots are full. Remove one to add another mineral.</p>
+        <p class="hint-text">Ritual Slots are full. Remove one to add another mineral.</p>
       {/if}
+
       {#if inventoryRows.length === 0}
         <p>No actionable minerals in inventory.</p>
       {:else}
-        <table>
-          <caption>Actionable inventory and active selection</caption>
-          <thead>
-            <tr>
-              <th scope="col">Mineral ID</th>
-              <th scope="col">Material</th>
-              <th scope="col">Worked Minutes</th>
-              <th scope="col">Stage</th>
-              <th scope="col">Selected</th>
-              <th scope="col">Ritual Slot</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each inventoryRows as row}
-              <tr>
-                <td>
-                  <code title={row.mineral.id}>{formatMineralId(row.mineral.id)}</code>
-                </td>
-                <td>{row.materialLabel}</td>
-                <td>{row.mineral.workedMinutes}</td>
-                <td>
-                  {#if row.progress.ok}
-                    {row.progress.view.currentStage} / {row.progress.view.stageCount}
-                  {:else}
-                    unavailable ({row.progress.reason})
-                  {/if}
-                </td>
-                <td>{row.isSelected ? 'Yes (active)' : 'No'}</td>
-                <td>{row.isSlotted ? 'Yes' : 'No'}</td>
-                <td>
+        <ul class="card-list">
+          {#each inventoryRows as row}
+            <li>
+              <article class="vault-card">
+                <header class="card-header">
+                  <h3>{row.materialLabel}</h3>
+                  <p class="hint-text"><code title={row.mineral.id}>{formatMineralId(row.mineral.id)}</code></p>
+                </header>
+
+                <dl class="meta-grid">
+                  <div>
+                    <dt>Worked Minutes</dt>
+                    <dd>{row.mineral.workedMinutes}</dd>
+                  </div>
+                  <div>
+                    <dt>Stage</dt>
+                    <dd>
+                      {#if row.progress.ok}
+                        {row.progress.view.currentStage} / {row.progress.view.stageCount}
+                      {:else}
+                        unavailable
+                      {/if}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Selected</dt>
+                    <dd>{row.isSelected ? 'Yes (active)' : 'No'}</dd>
+                  </div>
+                  <div>
+                    <dt>Ritual Slot</dt>
+                    <dd>{row.isSlotted ? 'Yes' : 'No'}</dd>
+                  </div>
+                </dl>
+
+                <div class="card-actions" aria-label="Material actions">
                   <Button
                     variant={row.isSelected ? 'primary' : 'secondary'}
                     disabled={row.isSelected || ritualIsRunning}
@@ -143,6 +151,7 @@
                   >
                     {row.isSelected ? 'Selected' : 'Select'}
                   </Button>
+
                   {#if row.isSlotted}
                     <Button variant="secondary" on:click={() => handleRemoveRitualSlot(row.mineral.id)}>
                       Remove Slot
@@ -156,46 +165,48 @@
                       Add Slot
                     </Button>
                   {/if}
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+                </div>
+              </article>
+            </li>
+          {/each}
+        </ul>
       {/if}
     </section>
   {:else}
-    <section aria-labelledby="collection-heading" class="subsection">
+    <section aria-labelledby="collection-heading" class="content-panel">
       <h2 id="collection-heading">Collection</h2>
       {#if collectionArtifacts.length === 0}
         <p>No artifacts revealed yet.</p>
       {:else}
-        <table>
-          <caption>Discovered artifacts</caption>
-          <thead>
-            <tr>
-              <th scope="col">Artifact</th>
-              <th scope="col">Rarity</th>
-              <th scope="col">Source Material</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each collectionArtifacts as artifact}
-              <tr>
-                <th scope="row">{artifact.name}</th>
-                <td>{artifact.rarity}</td>
-                <td>{artifact.materialType}</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+        <ul class="card-list">
+          {#each collectionArtifacts as artifact}
+            <li>
+              <article class="vault-card">
+                <header class="card-header">
+                  <h3>{artifact.name}</h3>
+                </header>
+                <dl class="meta-grid">
+                  <div>
+                    <dt>Rarity</dt>
+                    <dd>{artifact.rarity}</dd>
+                  </div>
+                  <div>
+                    <dt>Source Material</dt>
+                    <dd>{artifact.materialType}</dd>
+                  </div>
+                </dl>
+              </article>
+            </li>
+          {/each}
+        </ul>
       {/if}
     </section>
   {/if}
-</section>
 
-<section aria-labelledby="last-action-heading" class="panel">
-  <h2 id="last-action-heading">Last Action</h2>
-  <p>{lastActionMessage || 'No action yet.'}</p>
+  <section aria-labelledby="last-action-heading" class="last-action-panel">
+    <h2 id="last-action-heading">Last Action</h2>
+    <p>{lastActionMessage || 'No action yet.'}</p>
+  </section>
 </section>
 
 <style>
@@ -206,13 +217,15 @@
     padding: var(--space-3);
   }
 
-  .subsection {
-    margin-top: var(--space-3);
+  .vault-panel {
+    display: grid;
+    gap: var(--space-3);
   }
 
   h1,
-  h2 {
-    margin: 0 0 var(--space-2);
+  h2,
+  h3 {
+    margin: 0;
     line-height: 1.2;
   }
 
@@ -220,9 +233,20 @@
     margin: 0;
   }
 
-  .section-intro {
+  .section-intro,
+  .hint-text {
     color: var(--color-muted-text);
-    margin-bottom: var(--space-2);
+  }
+
+  .switch-panel,
+  .content-panel,
+  .last-action-panel {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-background);
+    padding: var(--space-2);
+    display: grid;
+    gap: var(--space-2);
   }
 
   .vault-switch {
@@ -231,32 +255,71 @@
     flex-wrap: wrap;
   }
 
-  .slot-helper {
-    color: var(--color-muted-text);
-    margin-bottom: var(--space-2);
+  .card-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
   }
 
-  table {
-    border-collapse: collapse;
+  .vault-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    padding: var(--space-2);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .card-header {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .meta-grid {
+    margin: 0;
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  dt {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted-text);
+  }
+
+  dd {
+    margin: 0.2rem 0 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .card-actions {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .card-actions :global(button) {
     width: 100%;
   }
 
-  caption {
-    font-weight: 600;
-    margin-bottom: var(--space-2);
-    text-align: left;
+  .last-action-panel {
+    background: var(--color-surface);
   }
 
-  th,
-  td {
-    border: 1px solid var(--color-border);
-    padding: var(--space-1) var(--space-2);
-    text-align: left;
-    vertical-align: top;
-  }
+  @media (min-width: 40rem) {
+    .card-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-  td :global(button) {
-    margin-right: var(--space-1);
-    margin-bottom: var(--space-1);
+    .card-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card-actions :global(button) {
+      width: auto;
+    }
   }
 </style>
