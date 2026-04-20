@@ -142,6 +142,40 @@ function deserializeRitualRuntime(raw: string | null | undefined): RitualRuntime
   }
 }
 
+function getFallbackSelectedMineralId(state: SanctuaryState): MineralId | null {
+  if (
+    state.selectedMineralId !== null &&
+    state.inventory.some((entry) => entry.id === state.selectedMineralId)
+  ) {
+    return state.selectedMineralId;
+  }
+
+  const inventoryIds = new Set(state.inventory.map((entry) => entry.id));
+  const firstValidSlotMineralId = state.ritualSlotMineralIds.find((id) => inventoryIds.has(id));
+  if (firstValidSlotMineralId) {
+    return firstValidSlotMineralId;
+  }
+
+  return state.inventory[0]?.id ?? null;
+}
+
+function applySelectionFallback(state: SanctuaryState): SanctuaryState {
+  // While a ritual is running, keep the current target mineral stable.
+  if (state.ritualRuntime.isRunning) {
+    return state;
+  }
+
+  const nextSelectedMineralId = getFallbackSelectedMineralId(state);
+  if (nextSelectedMineralId === state.selectedMineralId) {
+    return state;
+  }
+
+  return {
+    ...state,
+    selectedMineralId: nextSelectedMineralId,
+  };
+}
+
 function createSanctuaryStore(initialEssence = 12) {
   let timerIntervalId: ReturnType<typeof setInterval> | null = null;
   const { subscribe, set, update } = writable<SanctuaryState>(hydrateInitialState(initialEssence));
@@ -160,10 +194,10 @@ function createSanctuaryStore(initialEssence = 12) {
     try {
       const gameState = loadGameState(localStorage.getItem(STORAGE_KEY), startingEssence);
       const ritualRuntime = deserializeRitualRuntime(localStorage.getItem(RITUAL_TIMER_STORAGE_KEY));
-      return {
+      return applySelectionFallback({
         ...gameState,
         ritualRuntime,
-      };
+      });
     } catch {
       return defaultState;
     }
@@ -189,6 +223,15 @@ function createSanctuaryStore(initialEssence = 12) {
     }
   }
 
+  function toPersistedState(state: SanctuaryState, nextGameState: GameState): SanctuaryState {
+    const nextState = applySelectionFallback({
+      ...nextGameState,
+      ritualRuntime: state.ritualRuntime,
+    });
+    persistState(nextState);
+    return nextState;
+  }
+
   function ensureTimerInterval(): void {
     if (timerIntervalId !== null || !browser) {
       return;
@@ -208,10 +251,10 @@ function createSanctuaryStore(initialEssence = 12) {
           ritualRuntime.durationMinutes === null ||
           !isRitualDuration(ritualRuntime.durationMinutes)
         ) {
-          const resetState: SanctuaryState = {
+          const resetState = applySelectionFallback({
             ...state,
             ritualRuntime: createIdleRitualRuntime(now),
-          };
+          });
           clearTimerInterval();
           persistState(resetState);
           return resetState;
@@ -220,10 +263,10 @@ function createSanctuaryStore(initialEssence = 12) {
         if (now >= ritualRuntime.endTimestamp) {
           const completion = runCompleteSelectedRitual(state, ritualRuntime.durationMinutes);
           const nextGameState = completion.ok ? completion.state : state;
-          const nextState: SanctuaryState = {
+          const nextState = applySelectionFallback({
             ...nextGameState,
             ritualRuntime: createIdleRitualRuntime(now),
-          };
+          });
           clearTimerInterval();
           persistState(nextState);
           return nextState;
@@ -257,10 +300,10 @@ function createSanctuaryStore(initialEssence = 12) {
         ritualRuntime.durationMinutes === null ||
         !isRitualDuration(ritualRuntime.durationMinutes)
       ) {
-        const resetState: SanctuaryState = {
+        const resetState = applySelectionFallback({
           ...state,
           ritualRuntime: createIdleRitualRuntime(now),
-        };
+        });
         persistState(resetState);
         return resetState;
       }
@@ -268,10 +311,10 @@ function createSanctuaryStore(initialEssence = 12) {
       if (now >= ritualRuntime.endTimestamp) {
         const completion = runCompleteSelectedRitual(state, ritualRuntime.durationMinutes);
         const nextGameState = completion.ok ? completion.state : state;
-        const completedState: SanctuaryState = {
+        const completedState = applySelectionFallback({
           ...nextGameState,
           ritualRuntime: createIdleRitualRuntime(now),
-        };
+        });
         persistState(completedState);
         return completedState;
       }
@@ -294,12 +337,7 @@ function createSanctuaryStore(initialEssence = 12) {
       actionResult = result;
       console.log(`Buy ${materialType} result:`, result);
       if (result.ok) {
-        const nextState: SanctuaryState = {
-          ...result.state,
-          ritualRuntime: state.ritualRuntime,
-        };
-        persistState(nextState);
-        return nextState;
+        return toPersistedState(state, result.state);
       }
 
       return state;
@@ -312,6 +350,19 @@ function createSanctuaryStore(initialEssence = 12) {
 
   return {
     subscribe,
+    ensureRitualSelection() {
+      let didUpdateSelection = false;
+      update((state) => {
+        const nextState = applySelectionFallback(state);
+        didUpdateSelection = nextState !== state;
+        if (didUpdateSelection) {
+          persistState(nextState);
+        }
+        return nextState;
+      });
+
+      return didUpdateSelection;
+    },
     buyMineral(materialType: MaterialType) {
       return buy(materialType);
     },
@@ -325,12 +376,7 @@ function createSanctuaryStore(initialEssence = 12) {
         actionResult = result;
         console.log(`Complete ritual (${minutes} min) result:`, result);
         if (result.ok) {
-          const nextState: SanctuaryState = {
-            ...result.state,
-            ritualRuntime: state.ritualRuntime,
-          };
-          persistState(nextState);
-          return nextState;
+          return toPersistedState(state, result.state);
         }
 
         return state;
@@ -354,12 +400,7 @@ function createSanctuaryStore(initialEssence = 12) {
         actionResult = result;
         console.log(`Select mineral (${mineralId}) result:`, result);
         if (result.ok) {
-          const nextState: SanctuaryState = {
-            ...result.state,
-            ritualRuntime: state.ritualRuntime,
-          };
-          persistState(nextState);
-          return nextState;
+          return toPersistedState(state, result.state);
         }
 
         return state;
@@ -374,12 +415,7 @@ function createSanctuaryStore(initialEssence = 12) {
         actionResult = result;
         console.log(`Add ritual slot (${mineralId}) result:`, result);
         if (result.ok) {
-          const nextState: SanctuaryState = {
-            ...result.state,
-            ritualRuntime: state.ritualRuntime,
-          };
-          persistState(nextState);
-          return nextState;
+          return toPersistedState(state, result.state);
         }
 
         return state;
@@ -394,12 +430,7 @@ function createSanctuaryStore(initialEssence = 12) {
         actionResult = result;
         console.log(`Remove ritual slot (${mineralId}) result:`, result);
         if (result.ok) {
-          const nextState: SanctuaryState = {
-            ...result.state,
-            ritualRuntime: state.ritualRuntime,
-          };
-          persistState(nextState);
-          return nextState;
+          return toPersistedState(state, result.state);
         }
 
         return state;
@@ -414,12 +445,7 @@ function createSanctuaryStore(initialEssence = 12) {
         actionResult = result;
         console.log('Reveal selected mineral result:', result);
         if (result.ok) {
-          const nextState: SanctuaryState = {
-            ...result.state,
-            ritualRuntime: state.ritualRuntime,
-          };
-          persistState(nextState);
-          return nextState;
+          return toPersistedState(state, result.state);
         }
 
         return state;
@@ -439,23 +465,28 @@ function createSanctuaryStore(initialEssence = 12) {
           return state;
         }
 
+        const workingState = applySelectionFallback(state);
+        if (workingState !== state) {
+          persistState(workingState);
+        }
+
         if (!isRitualDuration(minutes)) {
           actionResult = {
             ok: false,
             reason: 'invalid_duration',
-            state,
+            state: workingState,
           };
-          return state;
+          return workingState;
         }
 
-        const selectedMineral = getSelectedMineral(state);
+        const selectedMineral = getSelectedMineral(workingState);
         if (!selectedMineral) {
           actionResult = {
             ok: false,
             reason: 'no_selected_mineral',
-            state,
+            state: workingState,
           };
-          return state;
+          return workingState;
         }
 
         const progress = getMineralProgressView(selectedMineral);
@@ -463,23 +494,23 @@ function createSanctuaryStore(initialEssence = 12) {
           actionResult = {
             ok: false,
             reason: 'selected_mineral_invalid',
-            state,
+            state: workingState,
           };
-          return state;
+          return workingState;
         }
 
         if (progress.view.isCompleted) {
           actionResult = {
             ok: false,
             reason: 'selected_mineral_completed',
-            state,
+            state: workingState,
           };
-          return state;
+          return workingState;
         }
 
         const now = Date.now();
         const nextState: SanctuaryState = {
-          ...state,
+          ...workingState,
           ritualRuntime: {
             isRunning: true,
             durationMinutes: minutes,
@@ -511,10 +542,10 @@ function createSanctuaryStore(initialEssence = 12) {
         }
 
         clearTimerInterval();
-        const nextState: SanctuaryState = {
+        const nextState = applySelectionFallback({
           ...state,
           ritualRuntime: createIdleRitualRuntime(Date.now()),
-        };
+        });
         actionResult = {
           ok: true,
           state: nextState,
@@ -545,10 +576,10 @@ function createSanctuaryStore(initialEssence = 12) {
         }
 
         clearTimerInterval();
-        const nextState: SanctuaryState = {
+        const nextState = applySelectionFallback({
           ...completion.state,
           ritualRuntime: createIdleRitualRuntime(Date.now()),
-        };
+        });
         persistState(nextState);
         return nextState;
       });
