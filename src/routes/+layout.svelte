@@ -30,24 +30,30 @@
 
 <div class="app-shell">
   <header class="app-header">
-    <p class="brand">Pomodora Sanctuary</p>
+    <div class="brand-block">
+      <p class="brand-kicker">Focus Ritual Sanctuary</p>
+      <p class="brand">Pomodora Sanctuary</p>
+    </div>
 
-    <dl class="compact-summary">
-      <div>
-        <dt>Essence</dt>
-        <dd>{$sanctuaryStore.player.essence}</dd>
-      </div>
-      <div>
-        <dt>Selected Mineral</dt>
-        <dd>{selectedMineral ? formatMineralLabel(selectedMineral.id) : 'none'}</dd>
-      </div>
-      <div>
-        <dt>Collection</dt>
-        <dd>{$sanctuaryStore.collection.length}</dd>
-      </div>
-    </dl>
+    <section aria-labelledby="summary-heading" class="summary-section">
+      <h2 id="summary-heading" class="sr-only">Sanctuary Summary</h2>
+      <dl class="compact-summary">
+        <div class="summary-item summary-essence">
+          <dt>Essence</dt>
+          <dd>{$sanctuaryStore.player.essence}</dd>
+        </div>
+        <div class="summary-item summary-selected">
+          <dt>Selected Mineral</dt>
+          <dd>{selectedMineral ? formatMineralLabel(selectedMineral.id) : 'none'}</dd>
+        </div>
+        <div class="summary-item summary-collection">
+          <dt>Collection</dt>
+          <dd>{$sanctuaryStore.collection.length}</dd>
+        </div>
+      </dl>
+    </section>
 
-    <nav aria-label="Primary">
+    <nav aria-label="Primary" class="primary-nav">
       <ul class="tab-list">
         <li>
           <a href="/ritual" aria-current={currentTab === 'ritual' ? 'page' : undefined}>
@@ -84,50 +90,79 @@
   .app-shell {
     margin: 0 auto;
     max-width: 72rem;
-    padding: var(--space-3);
-    display: grid;
-    gap: var(--space-3);
-  }
-
-  .app-header {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
+    padding: var(--space-2);
     display: grid;
     gap: var(--space-2);
   }
 
+  .app-header {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .brand-block {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .brand-kicker {
+    margin: 0;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-muted-text);
+  }
+
   .brand {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: 1.2rem;
     font-weight: 700;
+  }
+
+  .summary-section {
+    display: grid;
+    gap: var(--space-1);
   }
 
   .compact-summary {
     margin: 0;
     display: grid;
-    gap: var(--space-2);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .compact-summary div {
+  .summary-item {
     background: var(--color-background);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-1) var(--space-2);
   }
 
+  .summary-selected {
+    grid-column: 1 / -1;
+  }
+
   dt {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: var(--color-muted-text);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   dd {
-    margin: 0.25rem 0 0;
-    font-size: 0.95rem;
+    margin: 0.2rem 0 0;
+    font-size: 0.92rem;
     font-weight: 600;
+  }
+
+  .primary-nav {
+    margin-top: var(--space-1);
   }
 
   .tab-list {
@@ -147,8 +182,9 @@
     background: var(--color-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: var(--space-1) var(--space-2);
+    padding: 0.6rem var(--space-2);
     font-weight: 600;
+    line-height: 1.2;
   }
 
   .tab-list a[aria-current='page'] {
@@ -164,6 +200,43 @@
 
   .page-content {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (min-width: 40rem) {
+    .app-shell {
+      padding: var(--space-3);
+      gap: var(--space-3);
+    }
+
+    .app-header {
+      padding: var(--space-3);
+      gap: var(--space-3);
+    }
+
+    .compact-summary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-2);
+    }
+
+    .summary-selected {
+      grid-column: auto;
+    }
+
+    .page-content {
+      gap: var(--space-3);
+    }
   }
 </style>

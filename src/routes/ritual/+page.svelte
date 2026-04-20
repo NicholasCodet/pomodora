@@ -138,6 +138,7 @@
         <p class="timer-value">{ritualRemainingLabel}</p>
       </div>
       <p class="timer-status">{timerStatusText}</p>
+      <Button variant="primary" on:click={handleCancelRitual}>Cancel current ritual</Button>
     </section>
   {:else}
     <section aria-labelledby="ritual-status-heading" class="idle-status">
@@ -186,31 +187,47 @@
         </div>
       </dl>
 
-      <div class="ritual-actions" aria-label="Ritual actions">
-        <Button
-          variant="primary"
-          disabled={ritualIsRunning || isSelectedCompleted}
-          on:click={() => handleStartRitual(15)}
-        >
-          Start 15 min ritual
-        </Button>
-        <Button
-          variant="primary"
-          disabled={ritualIsRunning || isSelectedCompleted}
-          on:click={() => handleStartRitual(30)}
-        >
-          Start 30 min ritual
-        </Button>
-        <Button
-          variant="primary"
-          disabled={ritualIsRunning || isSelectedCompleted}
-          on:click={() => handleStartRitual(45)}
-        >
-          Start 45 min ritual
-        </Button>
-        <Button variant="secondary" disabled={!ritualIsRunning} on:click={handleCancelRitual}>
-          Cancel ritual
-        </Button>
+      <section
+        aria-labelledby="ritual-setup-heading"
+        class="setup-panel"
+        class:secondary-panel={ritualIsRunning}
+      >
+        <h3 id="ritual-setup-heading">{ritualIsRunning ? 'Ritual Setup (Locked)' : 'Start Ritual'}</h3>
+        {#if ritualIsRunning}
+          <p class="hint-text">
+            A ritual is active. Duration choice and mineral switching are temporarily disabled.
+          </p>
+        {:else}
+          <p class="hint-text">Choose a duration and start your focus ritual.</p>
+        {/if}
+
+        <div class="ritual-actions" aria-label="Ritual actions">
+          <Button
+            variant="primary"
+            disabled={ritualIsRunning || isSelectedCompleted}
+            on:click={() => handleStartRitual(15)}
+          >
+            Start 15 min ritual
+          </Button>
+          <Button
+            variant="primary"
+            disabled={ritualIsRunning || isSelectedCompleted}
+            on:click={() => handleStartRitual(30)}
+          >
+            Start 30 min ritual
+          </Button>
+          <Button
+            variant="primary"
+            disabled={ritualIsRunning || isSelectedCompleted}
+            on:click={() => handleStartRitual(45)}
+          >
+            Start 45 min ritual
+          </Button>
+        </div>
+      </section>
+
+      <section aria-labelledby="reveal-heading" class="reveal-panel">
+        <h3 id="reveal-heading">Reveal</h3>
         <Button
           variant="secondary"
           disabled={!isSelectedCompleted || ritualIsRunning}
@@ -218,22 +235,21 @@
         >
           Reveal artifact
         </Button>
-      </div>
-
-      {#if ritualIsRunning}
-        <p class="hint-text">
-          Ritual running ({ritualRuntime.durationMinutes} min). Time remaining: {ritualRemainingLabel}.
-        </p>
-      {:else if isSelectedCompleted}
-        <p class="hint-text">This mineral is fully refined. Reveal its artifact.</p>
-      {:else}
-        <p class="hint-text">
-          Complete the mineral before revealing.
-          {#if selectedProgress.view.remainingMinutesToNextStage !== null}
-            Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
-          {/if}
-        </p>
-      {/if}
+        {#if ritualIsRunning}
+          <p class="hint-text">
+            Ritual running ({ritualRuntime.durationMinutes} min). Reveal becomes available when the ritual ends.
+          </p>
+        {:else if isSelectedCompleted}
+          <p class="hint-text">This mineral is fully refined. You can reveal its artifact now.</p>
+        {:else}
+          <p class="hint-text">
+            Complete the mineral before revealing.
+            {#if selectedProgress.view.remainingMinutesToNextStage !== null}
+              Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
+            {/if}
+          </p>
+        {/if}
+      </section>
 
       {#if dev}
         <div class="debug-actions">
@@ -248,7 +264,11 @@
     {/if}
   </section>
 
-  <section aria-labelledby="ritual-slots-heading" class="support-panel">
+  <section
+    aria-labelledby="ritual-slots-heading"
+    class="support-panel"
+    class:secondary-panel={ritualIsRunning}
+  >
     <h2 id="ritual-slots-heading">Ritual Slots</h2>
     {#if ritualSlotRows.length === 0}
       <p>No Ritual Slots configured. Add them in Vault &gt; Materials.</p>
@@ -297,7 +317,8 @@
   }
 
   h1,
-  h2 {
+  h2,
+  h3 {
     margin: 0 0 var(--space-2);
     line-height: 1.2;
   }
@@ -316,7 +337,9 @@
   .idle-status,
   .primary-panel,
   .support-panel,
-  .last-action-panel {
+  .last-action-panel,
+  .setup-panel,
+  .reveal-panel {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-2);
@@ -328,6 +351,11 @@
   .timer-hero {
     justify-items: center;
     text-align: center;
+  }
+
+  .timer-hero :global(button) {
+    width: 100%;
+    max-width: 16rem;
   }
 
   .timer-display {
@@ -420,6 +448,10 @@
     gap: var(--space-1);
   }
 
+  .secondary-panel {
+    opacity: 0.72;
+  }
+
   .slot-list {
     margin: 0;
     padding: 0;
@@ -458,6 +490,10 @@
     }
 
     .ritual-actions :global(button) {
+      width: auto;
+    }
+
+    .timer-hero :global(button) {
       width: auto;
     }
   }
