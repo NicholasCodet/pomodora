@@ -2,7 +2,9 @@
   import { dev } from '$app/environment';
   import { onMount } from 'svelte';
   import Button from '$lib/components/Button.svelte';
-  import Icon from '$lib/components/Icon.svelte';
+  import RitualCountdown from '$lib/components/ritual/RitualCountdown.svelte';
+  import RitualDurationPicker from '$lib/components/ritual/RitualDurationPicker.svelte';
+  import RitualSlotsPanel from '$lib/components/ritual/RitualSlotsPanel.svelte';
   import {
     getRitualSlotMinerals,
     getMineralProgressView,
@@ -11,10 +13,13 @@
   } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
-  const TIMER_RING_RADIUS = 84;
-  const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * TIMER_RING_RADIUS;
+  const RITUAL_DURATION_PRESETS = [15, 30, 45] as const;
+
+  type RitualDurationPreset = (typeof RITUAL_DURATION_PRESETS)[number];
 
   let lastActionMessage = '';
+  let selectedDurationMinutes: RitualDurationPreset = 30;
+  let isDurationPickerOpen = false;
 
   onMount(() => {
     sanctuaryStore.ensureRitualSelection();
@@ -27,16 +32,6 @@
     ritualRuntime.isRunning && ritualRuntime.endTimestamp !== null
       ? Math.max(0, ritualRuntime.endTimestamp - ritualRuntime.tickNowTimestamp)
       : 0;
-  $: ritualDurationMs =
-    ritualRuntime.isRunning && ritualRuntime.durationMinutes !== null
-      ? ritualRuntime.durationMinutes * 60 * 1000
-      : 0;
-  $: ritualProgressRatio =
-    ritualIsRunning && ritualDurationMs > 0
-      ? Math.min(1, Math.max(0, 1 - ritualRemainingMs / ritualDurationMs))
-      : 0;
-  $: ritualProgressDashOffset =
-    TIMER_RING_CIRCUMFERENCE - ritualProgressRatio * TIMER_RING_CIRCUMFERENCE;
   $: ritualRemainingLabel = formatRemainingDuration(ritualRemainingMs);
   $: ritualSlots = getRitualSlotMinerals($sanctuaryStore);
   $: ritualSlotRows = ritualSlots.map((mineral) => ({
@@ -44,6 +39,15 @@
     progress: getMineralProgressView(mineral),
     materialLabel: getMaterialLabel(mineral.materialType),
     isSelected: $sanctuaryStore.selectedMineralId === mineral.id,
+  }));
+  $: ritualSlotItems = ritualSlotRows.map((slot) => ({
+    mineralId: slot.mineral.id,
+    materialLabel: slot.materialLabel,
+    progressLabel: slot.progress.ok
+      ? `stage ${slot.progress.view.currentStage}/${slot.progress.view.stageCount}, ${slot.progress.view.workedMinutes} min`
+      : 'progress unavailable',
+    isSelected: slot.isSelected,
+    isDisabled: slot.isSelected || ritualIsRunning,
   }));
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
@@ -68,6 +72,23 @@
     lastActionMessage = result.ok
       ? `Ritual started for ${minutes} minutes.`
       : `Ritual start failed: ${formatFailureReason(result.reason)}.`;
+  }
+
+  function handleBeginRitual(): void {
+    handleStartRitual(selectedDurationMinutes);
+  }
+
+  function toggleDurationPicker(): void {
+    isDurationPickerOpen = !isDurationPickerOpen;
+  }
+
+  function selectDurationPreset(minutes: number): void {
+    if (!RITUAL_DURATION_PRESETS.includes(minutes as RitualDurationPreset)) {
+      return;
+    }
+
+    selectedDurationMinutes = minutes as RitualDurationPreset;
+    isDurationPickerOpen = false;
   }
 
   function handleCancelRitual(): void {
@@ -137,26 +158,13 @@
   </header>
 
   {#if ritualIsRunning}
-    <section aria-labelledby="countdown-heading" class="timer-hero">
-      <h2 id="countdown-heading"><span class="heading-with-icon"><Icon name="timer" size={18} />Countdown</span></h2>
-      <div class="timer-display" role="status" aria-live="polite">
-        <div class="timer-ring-shell" aria-hidden="true">
-          <svg class="timer-ring" viewBox="0 0 200 200" focusable="false">
-            <circle class="timer-track" cx="100" cy="100" r={TIMER_RING_RADIUS} />
-            <circle
-              class="timer-progress"
-              cx="100"
-              cy="100"
-              r={TIMER_RING_RADIUS}
-              style={`stroke-dasharray: ${TIMER_RING_CIRCUMFERENCE}; stroke-dashoffset: ${ritualProgressDashOffset};`}
-            />
-          </svg>
-        </div>
-        <p class="timer-value">{ritualRemainingLabel}</p>
-      </div>
-      <p class="timer-status">{timerStatusText}</p>
-      <Button variant="primary" on:click={handleCancelRitual}>Cancel current ritual</Button>
-    </section>
+    <RitualCountdown
+      remainingLabel={ritualRemainingLabel}
+      statusText={timerStatusText}
+      remainingMs={ritualRemainingMs}
+      durationMinutes={ritualRuntime.durationMinutes}
+      onCancel={handleCancelRitual}
+    />
   {:else}
     <section aria-labelledby="ritual-status-heading" class="idle-status">
       <h2 id="ritual-status-heading">Ritual Status</h2>
@@ -224,47 +232,24 @@
         </section>
       {/if}
 
-      <section
-        aria-labelledby="ritual-setup-heading"
-        class="setup-panel"
-        class:secondary-panel={ritualIsRunning}
-      >
-        <h3 id="ritual-setup-heading">{ritualIsRunning ? 'Ritual Setup (Locked)' : 'Start Ritual'}</h3>
-        {#if ritualIsRunning}
+      {#if ritualIsRunning}
+        <section aria-labelledby="ritual-setup-heading" class="setup-panel secondary-panel">
+          <h3 id="ritual-setup-heading">Ritual Setup (Locked)</h3>
           <p class="hint-text">
             A ritual is active. Duration choice and mineral switching are temporarily disabled.
           </p>
-        {:else}
-          <p class="hint-text">Choose your ritual duration. Quick start uses the standard 30-minute session.</p>
-        {/if}
-
-        <div class="ritual-actions ritual-actions--primary" aria-label="Ritual actions">
-          <Button
-            variant="primary"
-            disabled={ritualIsRunning || isSelectedCompleted}
-            on:click={() => handleStartRitual(30)}
-          >
-            Start 30 min ritual
-          </Button>
-        </div>
-
-        <div class="ritual-actions ritual-actions--secondary" aria-label="Alternative ritual actions">
-          <Button
-            variant="secondary"
-            disabled={ritualIsRunning || isSelectedCompleted}
-            on:click={() => handleStartRitual(15)}
-          >
-            Start 15 min ritual
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={ritualIsRunning || isSelectedCompleted}
-            on:click={() => handleStartRitual(45)}
-          >
-            Start 45 min ritual
-          </Button>
-        </div>
-      </section>
+        </section>
+      {:else}
+        <RitualDurationPicker
+          selectedDurationMinutes={selectedDurationMinutes}
+          isPickerOpen={isDurationPickerOpen}
+          isBeginDisabled={isSelectedCompleted}
+          presets={RITUAL_DURATION_PRESETS}
+          onBegin={handleBeginRitual}
+          onTogglePicker={toggleDurationPicker}
+          onSelectPreset={selectDurationPreset}
+        />
+      {/if}
 
       <section aria-labelledby="reveal-heading" class="reveal-panel">
         <h3 id="reveal-heading">Reveal</h3>
@@ -304,38 +289,9 @@
     {/if}
   </section>
 
-  <section
-    aria-labelledby="ritual-slots-heading"
-    class="support-panel"
-    class:secondary-panel={ritualIsRunning}
-  >
-    <h2 id="ritual-slots-heading">Ritual Slots</h2>
-    {#if ritualSlotRows.length === 0}
-      <p>No Ritual Slots configured. Add them in Vault &gt; Materials.</p>
-    {:else}
-      <ul class="slot-list">
-        {#each ritualSlotRows as slot}
-          <li class="slot-item">
-            <p>
-              <strong>{slot.materialLabel}</strong>
-              <span class="slot-meta">
-                {slot.progress.ok
-                  ? `stage ${slot.progress.view.currentStage}/${slot.progress.view.stageCount}, ${slot.progress.view.workedMinutes} min`
-                  : 'progress unavailable'}
-              </span>
-            </p>
-            <Button
-              variant={slot.isSelected ? 'primary' : 'secondary'}
-              disabled={slot.isSelected || ritualIsRunning}
-              on:click={() => handleSelectRitualSlot(slot.mineral.id)}
-            >
-              {slot.isSelected ? 'Active' : 'Use for Ritual'}
-            </Button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </section>
+  <div class:secondary-panel={ritualIsRunning}>
+    <RitualSlotsPanel slots={ritualSlotItems} onSelectSlot={handleSelectRitualSlot} />
+  </div>
 
   <section aria-labelledby="last-action-heading" class="last-action-panel">
     <h2 id="last-action-heading">Last Action</h2>
@@ -363,89 +319,28 @@
     line-height: 1.2;
   }
 
-  .heading-with-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
   p {
     margin: 0;
   }
 
   .section-intro,
-  .hint-text,
-  .timer-status {
+  .hint-text {
     color: var(--color-muted-text);
   }
 
-  .timer-hero,
   .idle-status,
   .primary-panel,
-  .support-panel,
   .last-action-panel,
   .setup-panel,
-  .reveal-panel {
+  .reveal-panel,
+  .idle-progress,
+  .summary-grid div {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: var(--space-2);
     display: grid;
     gap: var(--space-2);
     background: var(--color-background);
-  }
-
-  .timer-hero {
-    justify-items: center;
-    text-align: center;
-  }
-
-  .timer-hero :global(button) {
-    width: 100%;
-    max-width: 16rem;
-  }
-
-  .timer-display {
-    position: relative;
-    display: grid;
-    place-items: center;
-  }
-
-  .timer-ring-shell {
-    width: min(80vw, 16rem);
-    aspect-ratio: 1 / 1;
-    display: grid;
-    place-items: center;
-  }
-
-  .timer-ring {
-    width: 100%;
-    height: 100%;
-  }
-
-  .timer-track,
-  .timer-progress {
-    fill: none;
-    stroke-width: 12;
-  }
-
-  .timer-track {
-    stroke: var(--color-border);
-  }
-
-  .timer-progress {
-    stroke: var(--color-primary);
-    stroke-linecap: round;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-    transition: stroke-dashoffset 1s linear;
-  }
-
-  .timer-value {
-    position: absolute;
-    margin: 0;
-    font-size: clamp(2rem, 12vw, 3.25rem);
-    font-weight: 700;
-    letter-spacing: 0.04em;
   }
 
   .mineral-title {
@@ -459,22 +354,6 @@
     display: grid;
     gap: var(--space-2);
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  }
-
-  .summary-grid div {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2);
-  }
-
-  .idle-progress {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    padding: var(--space-2);
-    display: grid;
-    gap: var(--space-1);
   }
 
   .progress-stage {
@@ -501,19 +380,6 @@
     font-weight: 600;
   }
 
-  .ritual-actions {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .ritual-actions--secondary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ritual-actions :global(button) {
-    width: 100%;
-  }
-
   .debug-actions {
     display: grid;
     gap: var(--space-1);
@@ -523,49 +389,13 @@
     opacity: 0.72;
   }
 
-  .slot-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .slot-item {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2);
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .slot-meta {
-    display: block;
-    margin-top: 0.25rem;
-    color: var(--color-muted-text);
-    font-size: 0.875rem;
-  }
-
   .last-action-panel {
     background: var(--color-surface);
   }
 
   @media (min-width: 40rem) {
-    .slot-item {
-      grid-template-columns: 1fr auto;
-      align-items: center;
-    }
-
-    .ritual-actions--secondary {
+    .summary-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .ritual-actions :global(button) {
-      width: auto;
-    }
-
-    .timer-hero :global(button) {
-      width: auto;
     }
   }
 </style>
