@@ -54,31 +54,32 @@
       </dl>
     </section>
 
-    <nav aria-label="Primary" class="primary-nav">
-      <ul class="tab-list">
-        <li>
-          <a href="/ritual" aria-current={currentTab === 'ritual' ? 'page' : undefined}>
-            <span class="tab-label"><Icon name="ritual" size={16} />Ritual{#if currentTab === 'ritual'} (current){/if}</span>
-          </a>
-        </li>
-        <li>
-          <a href="/workshop" aria-current={currentTab === 'workshop' ? 'page' : undefined}>
-            <span class="tab-label"><Icon name="workshop" size={16} />Workshop{#if currentTab === 'workshop'} (current){/if}</span>
-          </a>
-        </li>
-        <li>
-          <a href="/vault" aria-current={currentTab === 'vault' ? 'page' : undefined}>
-            <span class="tab-label"><Icon name="vault" size={16} />Vault{#if currentTab === 'vault'} (current){/if}</span>
-          </a>
-        </li>
-      </ul>
-    </nav>
   </header>
 
   <main class="page-content">
     <slot />
   </main>
 </div>
+
+<nav aria-label="Primary" class="bottom-tab-nav">
+  <ul class="tab-list">
+    <li>
+      <a href="/ritual" aria-current={currentTab === 'ritual' ? 'page' : undefined}>
+        <span class="tab-label"><Icon name="ritual" size={18} />Ritual{#if currentTab === 'ritual'} (current){/if}</span>
+      </a>
+    </li>
+    <li>
+      <a href="/workshop" aria-current={currentTab === 'workshop' ? 'page' : undefined}>
+        <span class="tab-label"><Icon name="workshop" size={18} />Workshop{#if currentTab === 'workshop'} (current){/if}</span>
+      </a>
+    </li>
+    <li>
+      <a href="/vault" aria-current={currentTab === 'vault' ? 'page' : undefined}>
+        <span class="tab-label"><Icon name="vault" size={18} />Vault{#if currentTab === 'vault'} (current){/if}</span>
+      </a>
+    </li>
+  </ul>
+</nav>
 
 <style>
   :global(body) {
@@ -174,12 +175,20 @@
     font-weight: 600;
   }
 
-  .primary-nav {
-    margin-top: var(--space-1);
+  .bottom-tab-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom));
   }
 
   .tab-list {
-    margin: 0;
+    margin: 0 auto;
+    max-width: 72rem;
     padding: 0;
     list-style: none;
     display: grid;
@@ -195,7 +204,7 @@
     background: var(--color-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    padding: 0.6rem var(--space-2);
+    padding: 0.5rem var(--space-2);
     font-weight: 600;
     line-height: 1.2;
   }
@@ -214,6 +223,7 @@
   .page-content {
     display: grid;
     gap: var(--space-2);
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
   .sr-only {
@@ -250,6 +260,7 @@
 
     .page-content {
       gap: var(--space-3);
+      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
     }
   }
 </style>
