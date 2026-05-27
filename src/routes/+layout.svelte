@@ -65,23 +65,28 @@
   <ul class="tab-list">
     <li>
       <a href="/ritual" aria-current={currentTab === 'ritual' ? 'page' : undefined}>
-        <span class="tab-label"><Icon name="ritual" size={18} />Ritual{#if currentTab === 'ritual'} (current){/if}</span>
+        <span class="tab-label"><Icon name="ritual" size={18} />Ritual</span>
       </a>
     </li>
     <li>
       <a href="/workshop" aria-current={currentTab === 'workshop' ? 'page' : undefined}>
-        <span class="tab-label"><Icon name="workshop" size={18} />Workshop{#if currentTab === 'workshop'} (current){/if}</span>
+        <span class="tab-label"><Icon name="workshop" size={18} />Workshop</span>
       </a>
     </li>
     <li>
       <a href="/vault" aria-current={currentTab === 'vault' ? 'page' : undefined}>
-        <span class="tab-label"><Icon name="vault" size={18} />Vault{#if currentTab === 'vault'} (current){/if}</span>
+        <span class="tab-label"><Icon name="vault" size={18} />Vault</span>
       </a>
     </li>
   </ul>
 </nav>
 
 <style>
+  :global(:root) {
+    --bottom-tab-min-height: 3rem;
+    --bottom-tab-reserved-space: 6rem;
+  }
+
   :global(body) {
     margin: 0;
     font-family: 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
@@ -164,6 +169,12 @@
     gap: 0.35rem;
   }
 
+  .tab-label {
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
   .label-with-icon :global(svg),
   .tab-label :global(svg) {
     flex-shrink: 0;
@@ -197,7 +208,9 @@
   }
 
   .tab-list a {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     text-decoration: none;
     color: var(--color-text);
@@ -205,6 +218,7 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     padding: 0.5rem var(--space-2);
+    min-height: var(--bottom-tab-min-height);
     font-weight: 600;
     line-height: 1.2;
   }
@@ -213,6 +227,7 @@
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: #ffffff;
+    font-weight: 700;
   }
 
   .tab-list a:focus-visible {
@@ -223,7 +238,7 @@
   .page-content {
     display: grid;
     gap: var(--space-2);
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--bottom-tab-reserved-space) + env(safe-area-inset-bottom));
   }
 
   .sr-only {
@@ -260,7 +275,7 @@
 
     .page-content {
       gap: var(--space-3);
-      padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(var(--bottom-tab-reserved-space) + env(safe-area-inset-bottom));
     }
   }
 </style>
