@@ -1,5 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import type { CollectionArtifactView } from '$lib/app/sanctuary';
   import {
     RITUAL_SLOT_LIMIT,
@@ -175,7 +176,13 @@
         </div>
         <div>
           <dt>Active Mineral</dt>
-          <dd>{selectedMineralRow ? formatMineralId(selectedMineralRow.mineral.id) : 'none'}</dd>
+          <dd>
+            {#if selectedMineralRow}
+              <span class="inline-icon"><Icon name="check" size={14} />{formatMineralId(selectedMineralRow.mineral.id)}</span>
+            {:else}
+              none
+            {/if}
+          </dd>
         </div>
         <div>
           <dt>Ritual Slots</dt>
@@ -202,7 +209,9 @@
                   <p class="hint-text"><code title={row.mineral.id}>{formatMineralId(row.mineral.id)}</code></p>
                   <p class="status-badges">
                     {#if row.isSelected}
-                      <span class="status-chip status-active">Active</span>
+                      <span class="status-chip status-active">
+                        <span class="inline-icon"><Icon name="check" size={13} />Active</span>
+                      </span>
                     {/if}
                     {#if row.isSlotted}
                       <span class="status-chip status-slot">In Ritual Slots</span>
@@ -443,6 +452,12 @@
     padding: 0.15rem 0.6rem;
     font-size: 0.75rem;
     font-weight: 700;
+  }
+
+  .inline-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
   }
 
   .status-active {

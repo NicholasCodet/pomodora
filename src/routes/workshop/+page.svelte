@@ -1,5 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import { getShopMaterialStates } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
@@ -88,7 +89,13 @@
             </header>
 
             <p class="material-state">
-              <span class={`state-badge ${getStatusClass(material)}`}>{getShopStateLabel(material)}</span>
+              <span class={`state-badge ${getStatusClass(material)}`}>
+                {#if material.blockedReason === 'material_locked'}
+                  <span class="badge-with-icon"><Icon name="lock" size={13} />{getShopStateLabel(material)}</span>
+                {:else}
+                  {getShopStateLabel(material)}
+                {/if}
+              </span>
               <span class="state-hint">{getShopStateHint(material)}</span>
             </p>
 
@@ -189,6 +196,12 @@
     padding: 0.15rem 0.6rem;
     font-size: 0.8rem;
     font-weight: 700;
+  }
+
+  .badge-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .status-available {

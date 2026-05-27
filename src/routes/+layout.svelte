@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import Icon from '$lib/components/Icon.svelte';
   import { getSelectedMineral } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
   import '$lib/design/tokens.css';
@@ -39,7 +40,7 @@
       <h2 id="summary-heading" class="sr-only">Sanctuary Summary</h2>
       <dl class="compact-summary">
         <div class="summary-item summary-essence">
-          <dt>Essence</dt>
+          <dt><span class="label-with-icon"><Icon name="essence" size={14} />Essence</span></dt>
           <dd>{$sanctuaryStore.player.essence}</dd>
         </div>
         <div class="summary-item summary-selected">
@@ -47,7 +48,7 @@
           <dd>{selectedMineral ? formatMineralLabel(selectedMineral.id) : 'none'}</dd>
         </div>
         <div class="summary-item summary-collection">
-          <dt>Collection</dt>
+          <dt><span class="label-with-icon"><Icon name="collection" size={14} />Collection</span></dt>
           <dd>{$sanctuaryStore.collection.length}</dd>
         </div>
       </dl>
@@ -57,17 +58,17 @@
       <ul class="tab-list">
         <li>
           <a href="/ritual" aria-current={currentTab === 'ritual' ? 'page' : undefined}>
-            Ritual{#if currentTab === 'ritual'} (current){/if}
+            <span class="tab-label"><Icon name="ritual" size={16} />Ritual{#if currentTab === 'ritual'} (current){/if}</span>
           </a>
         </li>
         <li>
           <a href="/workshop" aria-current={currentTab === 'workshop' ? 'page' : undefined}>
-            Workshop{#if currentTab === 'workshop'} (current){/if}
+            <span class="tab-label"><Icon name="workshop" size={16} />Workshop{#if currentTab === 'workshop'} (current){/if}</span>
           </a>
         </li>
         <li>
           <a href="/vault" aria-current={currentTab === 'vault' ? 'page' : undefined}>
-            Vault{#if currentTab === 'vault'} (current){/if}
+            <span class="tab-label"><Icon name="vault" size={16} />Vault{#if currentTab === 'vault'} (current){/if}</span>
           </a>
         </li>
       </ul>
@@ -153,6 +154,18 @@
     color: var(--color-muted-text);
     text-transform: uppercase;
     letter-spacing: 0.02em;
+  }
+
+  .label-with-icon,
+  .tab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .label-with-icon :global(svg),
+  .tab-label :global(svg) {
+    flex-shrink: 0;
   }
 
   dd {

@@ -2,6 +2,7 @@
   import { dev } from '$app/environment';
   import { onMount } from 'svelte';
   import Button from '$lib/components/Button.svelte';
+  import Icon from '$lib/components/Icon.svelte';
   import {
     getRitualSlotMinerals,
     getMineralProgressView,
@@ -121,7 +122,7 @@
 
   {#if ritualIsRunning}
     <section aria-labelledby="countdown-heading" class="timer-hero">
-      <h2 id="countdown-heading">Countdown</h2>
+      <h2 id="countdown-heading"><span class="heading-with-icon"><Icon name="timer" size={18} />Countdown</span></h2>
       <div class="timer-display" role="status" aria-live="polite">
         <div class="timer-ring-shell" aria-hidden="true">
           <svg class="timer-ring" viewBox="0 0 200 200" focusable="false">
@@ -321,6 +322,12 @@
   h3 {
     margin: 0 0 var(--space-2);
     line-height: 1.2;
+  }
+
+  .heading-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 
   p {
