@@ -108,6 +108,22 @@
     const seconds = totalSeconds % 60;
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
+
+  function getNextProgressLabel(): string {
+    if (!selectedProgress?.ok) {
+      return 'Progress unavailable';
+    }
+
+    if (selectedProgress.view.isCompleted) {
+      return 'Fully refined';
+    }
+
+    if (selectedProgress.view.remainingMinutesToNextStage === null) {
+      return 'Next stage unknown';
+    }
+
+    return `${selectedProgress.view.remainingMinutesToNextStage} min to next stage`;
+  }
 </script>
 
 <svelte:head>
@@ -165,28 +181,48 @@
         <span class="hint-text">({selectedMineral.id})</span>
       </p>
 
-      <dl class="summary-grid">
-        <div>
-          <dt>Stage</dt>
-          <dd>{selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}</dd>
-        </div>
-        <div>
-          <dt>Worked Minutes</dt>
-          <dd>{selectedProgress.view.workedMinutes}</dd>
-        </div>
-        <div>
-          <dt>Next Threshold</dt>
-          <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
-        </div>
-        <div>
-          <dt>Remaining Minutes</dt>
-          <dd>{selectedProgress.view.remainingMinutesToNextStage ?? 'none'}</dd>
-        </div>
-        <div>
-          <dt>Completed</dt>
-          <dd>{selectedProgress.view.isCompleted ? 'Yes' : 'No'}</dd>
-        </div>
-      </dl>
+      {#if ritualIsRunning}
+        <dl class="summary-grid">
+          <div>
+            <dt>Stage</dt>
+            <dd>{selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}</dd>
+          </div>
+          <div>
+            <dt>Worked Minutes</dt>
+            <dd>{selectedProgress.view.workedMinutes}</dd>
+          </div>
+          <div>
+            <dt>Next Threshold</dt>
+            <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
+          </div>
+          <div>
+            <dt>Remaining Minutes</dt>
+            <dd>{selectedProgress.view.remainingMinutesToNextStage ?? 'none'}</dd>
+          </div>
+          <div>
+            <dt>Completed</dt>
+            <dd>{selectedProgress.view.isCompleted ? 'Yes' : 'No'}</dd>
+          </div>
+        </dl>
+      {:else}
+        <section aria-labelledby="idle-progress-heading" class="idle-progress">
+          <h3 id="idle-progress-heading">Progress</h3>
+          <p class="progress-stage">
+            Stage {selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}
+          </p>
+          <p class="hint-text">{getNextProgressLabel()}</p>
+          <dl class="progress-inline">
+            <div>
+              <dt>Worked</dt>
+              <dd>{selectedProgress.view.workedMinutes} min</dd>
+            </div>
+            <div>
+              <dt>Next Threshold</dt>
+              <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
+            </div>
+          </dl>
+        </section>
+      {/if}
 
       <section
         aria-labelledby="ritual-setup-heading"
@@ -199,17 +235,10 @@
             A ritual is active. Duration choice and mineral switching are temporarily disabled.
           </p>
         {:else}
-          <p class="hint-text">Choose a duration and start your focus ritual.</p>
+          <p class="hint-text">Choose your ritual duration. Quick start uses the standard 30-minute session.</p>
         {/if}
 
-        <div class="ritual-actions" aria-label="Ritual actions">
-          <Button
-            variant="primary"
-            disabled={ritualIsRunning || isSelectedCompleted}
-            on:click={() => handleStartRitual(15)}
-          >
-            Start 15 min ritual
-          </Button>
+        <div class="ritual-actions ritual-actions--primary" aria-label="Ritual actions">
           <Button
             variant="primary"
             disabled={ritualIsRunning || isSelectedCompleted}
@@ -217,8 +246,18 @@
           >
             Start 30 min ritual
           </Button>
+        </div>
+
+        <div class="ritual-actions ritual-actions--secondary" aria-label="Alternative ritual actions">
           <Button
-            variant="primary"
+            variant="secondary"
+            disabled={ritualIsRunning || isSelectedCompleted}
+            on:click={() => handleStartRitual(15)}
+          >
+            Start 15 min ritual
+          </Button>
+          <Button
+            variant="secondary"
             disabled={ritualIsRunning || isSelectedCompleted}
             on:click={() => handleStartRitual(45)}
           >
@@ -429,6 +468,27 @@
     padding: var(--space-2);
   }
 
+  .idle-progress {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    padding: var(--space-2);
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .progress-stage {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .progress-inline {
+    margin: 0;
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   dt {
     font-size: 0.8rem;
     font-weight: 600;
@@ -444,6 +504,10 @@
   .ritual-actions {
     display: grid;
     gap: var(--space-2);
+  }
+
+  .ritual-actions--secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ritual-actions :global(button) {
@@ -492,7 +556,7 @@
       align-items: center;
     }
 
-    .ritual-actions {
+    .ritual-actions--secondary {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
