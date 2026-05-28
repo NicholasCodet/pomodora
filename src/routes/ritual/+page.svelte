@@ -9,6 +9,7 @@
   import {
     getRitualSlotMinerals,
     getMineralProgressView,
+    getMaterialStageThresholds,
     getSelectedMineral,
     getShopMaterialStates,
   } from '$lib/app/sanctuary';
@@ -71,6 +72,9 @@
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
   $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
+  $: selectedStageThresholds =
+    selectedProgress?.ok ? getMaterialStageThresholds(selectedProgress.view.materialType) : null;
+  $: stageProgress = buildStageProgress(selectedProgress, selectedStageThresholds);
   $: hasInventory = $sanctuaryStore.inventory.length > 0;
   $: timerStatusText = ritualIsRunning
     ? `Ritual running (${ritualRuntime.durationMinutes ?? 0} min session).`
@@ -180,6 +184,54 @@
     }
 
     return `${selectedProgress.view.remainingMinutesToNextStage} min to next stage`;
+  }
+
+  function buildStageProgress(
+    progressResult: typeof selectedProgress,
+    stageThresholds: readonly number[] | null,
+  ): {
+    stageLabel: string;
+    percentage: number;
+    remainingLabel: string;
+    rangeLabel: string;
+  } | null {
+    if (!progressResult?.ok) {
+      return null;
+    }
+
+    const view = progressResult.view;
+    const stageLabel = `Stage ${view.currentStage} / ${view.stageCount}`;
+
+    if (view.isCompleted) {
+      return {
+        stageLabel,
+        percentage: 100,
+        remainingLabel: 'Mineral fully refined. Reveal its artifact.',
+        rangeLabel: 'Final stage completed.',
+      };
+    }
+
+    const thresholds = stageThresholds ?? [];
+    const currentStageStart =
+      view.currentStage <= 0 ? 0 : (thresholds[view.currentStage - 1] ?? 0);
+    const nextStageThreshold = thresholds[view.currentStage] ?? view.nextThreshold ?? currentStageStart;
+    const span = Math.max(1, nextStageThreshold - currentStageStart);
+    const progressed = Math.min(
+      span,
+      Math.max(0, view.workedMinutes - currentStageStart),
+    );
+    const percentage = Math.round((progressed / span) * 100);
+    const remainingLabel =
+      view.remainingMinutesToNextStage === null
+        ? 'Next stage threshold unavailable.'
+        : `${view.remainingMinutesToNextStage} min remaining to next stage`;
+
+    return {
+      stageLabel,
+      percentage,
+      remainingLabel,
+      rangeLabel: `${progressed} of ${span} stage minutes completed`,
+    };
   }
 
   function formatRarityLabel(rarity: RevealRarity): string {
@@ -317,9 +369,6 @@
       {:else}
         <section aria-labelledby="idle-progress-heading" class="idle-progress">
           <h3 id="idle-progress-heading">Progress</h3>
-          <p class="progress-stage">
-            Stage {selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}
-          </p>
           <p class="hint-text">{getNextProgressLabel()}</p>
           <dl class="progress-inline">
             <div>
@@ -331,6 +380,21 @@
               <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
             </div>
           </dl>
+        </section>
+      {/if}
+
+      {#if stageProgress}
+        <section aria-labelledby="stage-progress-heading" class="stage-progress-panel">
+          <h3 id="stage-progress-heading">Refinement Progress</h3>
+          <p class="progress-stage">{stageProgress.stageLabel}</p>
+          <progress
+            class="stage-progress-bar"
+            value={stageProgress.percentage}
+            max="100"
+            aria-label={stageProgress.rangeLabel}
+          ></progress>
+          <p class="stage-progress-percent">{stageProgress.percentage}%</p>
+          <p class="hint-text">{stageProgress.remainingLabel}</p>
         </section>
       {/if}
 
@@ -503,6 +567,7 @@
   .last-action-panel,
   .setup-panel,
   .reveal-panel,
+  .stage-progress-panel,
   .reveal-moment-panel,
   .idle-progress,
   .summary-grid div {
@@ -529,6 +594,16 @@
 
   .progress-stage {
     font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .stage-progress-bar {
+    width: 100%;
+    height: 0.75rem;
+  }
+
+  .stage-progress-percent {
+    font-size: 0.9rem;
     font-weight: 700;
   }
 

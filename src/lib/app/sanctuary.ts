@@ -60,6 +60,10 @@ export function getShopMaterialStates(state: GameState): ShopMaterialState[] {
   return buildShopMaterialStates(state, MATERIALS);
 }
 
+export function getMaterialStageThresholds(materialType: MaterialType): readonly number[] {
+  return MATERIAL_DEFINITIONS[materialType].stageThresholds;
+}
+
 export function buyAndSelectMineral(
   state: GameState,
   materialType: MaterialType,
