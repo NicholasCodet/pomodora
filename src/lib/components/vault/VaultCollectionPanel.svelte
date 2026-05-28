@@ -1,10 +1,14 @@
 <script lang="ts">
+  import Button from '$lib/components/Button.svelte';
+
   type ArtifactRarity = 'common' | 'rare' | 'epic' | 'unknown';
 
   interface VaultCollectionArtifactView {
+    artifactId: string;
     name: string;
     rarity: ArtifactRarity;
     materialType: string;
+    sourceMineralId: string;
     discoveredAt: number;
   }
 
@@ -16,8 +20,15 @@
 
   export let artifacts: VaultCollectionArtifactView[];
   export let groups: VaultCollectionGroupView[];
+  export let hasActionableMinerals = false;
+  let selectedArtifactKey: string | null = null;
+
   function formatDiscoveredDate(timestamp: number): string {
     return new Date(timestamp).toLocaleDateString();
+  }
+
+  function formatDiscoveredDateTime(timestamp: number): string {
+    return new Date(timestamp).toLocaleString();
   }
 
   function getRarityClass(rarity: ArtifactRarity): string {
@@ -35,6 +46,15 @@
 
     return 'rarity-unknown';
   }
+
+  function buildArtifactKey(artifact: VaultCollectionArtifactView): string {
+    return `${artifact.artifactId}:${artifact.sourceMineralId}:${artifact.discoveredAt}`;
+  }
+
+  function toggleArtifactSelection(artifact: VaultCollectionArtifactView): void {
+    const artifactKey = buildArtifactKey(artifact);
+    selectedArtifactKey = selectedArtifactKey === artifactKey ? null : artifactKey;
+  }
 </script>
 
 <section aria-labelledby="collection-heading" class="content-panel collection-panel">
@@ -44,6 +64,9 @@
   {#if artifacts.length === 0}
     <p>Your collection is empty for now.</p>
     <p class="hint-text">Complete and reveal minerals from Ritual to begin your archive.</p>
+    {#if hasActionableMinerals}
+      <p><a class="empty-state-link" href="/ritual">Go to Ritual</a></p>
+    {/if}
   {:else}
     <div class="collection-groups">
       {#each groups as group}
@@ -56,7 +79,9 @@
           <ul class="artifact-list">
             {#each group.items as artifact}
               <li>
-                <article class={`vault-card artifact-card ${getRarityClass(artifact.rarity)}`}>
+                <article
+                  class={`vault-card artifact-card ${getRarityClass(artifact.rarity)} ${selectedArtifactKey === buildArtifactKey(artifact) ? 'artifact-card-expanded' : ''}`}
+                >
                   <header class="card-header">
                     <h4>{artifact.name}</h4>
                     <p class="status-chip rarity-label">{group.label}</p>
@@ -72,6 +97,46 @@
                       <dd>{formatDiscoveredDate(artifact.discoveredAt)}</dd>
                     </div>
                   </dl>
+
+                  {#if selectedArtifactKey === buildArtifactKey(artifact)}
+                    <section
+                      aria-labelledby={`artifact-expanded-${buildArtifactKey(artifact)}`}
+                      class="artifact-expanded-details"
+                    >
+                      <h5 id={`artifact-expanded-${buildArtifactKey(artifact)}`}>Expanded detail (selected)</h5>
+                      <dl class="meta-grid expanded-meta">
+                        <div>
+                          <dt>Discovered (exact)</dt>
+                          <dd>{formatDiscoveredDateTime(artifact.discoveredAt)}</dd>
+                        </div>
+                      </dl>
+
+                      <section
+                        aria-labelledby={`artifact-visual-placeholder-${buildArtifactKey(artifact)}`}
+                        class="visual-placeholder"
+                      >
+                        <h6 id={`artifact-visual-placeholder-${buildArtifactKey(artifact)}`}>
+                          Visual Detail Placeholder
+                        </h6>
+                        <p class="hint-text">
+                          Future update: artwork or 3D presentation will be displayed here.
+                        </p>
+                      </section>
+                    </section>
+                  {/if}
+
+                  <div class="card-actions">
+                    <Button
+                      variant={selectedArtifactKey === buildArtifactKey(artifact) ? 'primary' : 'secondary'}
+                      on:click={() => toggleArtifactSelection(artifact)}
+                    >
+                      {#if selectedArtifactKey === buildArtifactKey(artifact)}
+                        Inspecting (selected)
+                      {:else}
+                        Inspect artifact
+                      {/if}
+                    </Button>
+                  </div>
                 </article>
               </li>
             {/each}
@@ -112,6 +177,12 @@
     color: var(--color-muted-text);
   }
 
+  .empty-state-link {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+  }
+
   .collection-groups {
     display: grid;
     gap: var(--space-3);
@@ -150,6 +221,10 @@
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
+  .artifact-card-expanded {
+    border-color: #93c5fd;
+  }
+
   .card-header {
     display: grid;
     gap: 0.35rem;
@@ -173,6 +248,26 @@
     display: grid;
     gap: var(--space-1);
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-actions :global(button) {
+    width: 100%;
+  }
+
+  .artifact-expanded-details {
+    border-top: 1px dashed var(--color-border);
+    padding-top: var(--space-2);
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .visual-placeholder {
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2);
+    background: var(--color-background);
+    display: grid;
+    gap: var(--space-1);
   }
 
   dt {
@@ -201,6 +296,16 @@
 
   .rarity-unknown {
     border-color: var(--color-border);
+  }
+
+  h5,
+  h6 {
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .expanded-meta {
+    grid-template-columns: 1fr;
   }
 
   @media (min-width: 40rem) {

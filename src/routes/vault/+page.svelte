@@ -158,7 +158,11 @@
       onRemoveRitualSlot={handleRemoveRitualSlot}
     />
   {:else}
-    <VaultCollectionPanel artifacts={collectionArtifacts} groups={collectionGroups} />
+    <VaultCollectionPanel
+      artifacts={collectionArtifacts}
+      groups={collectionGroups}
+      hasActionableMinerals={inventoryRows.length > 0}
+    />
   {/if}
 
   {#if lastActionMessage}

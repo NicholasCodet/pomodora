@@ -281,8 +281,9 @@
         <p>No active mineral is currently available for ritual.</p>
         <p class="hint-text">Open Vault to select one manually, or use Ritual Slots for quick access.</p>
       {:else}
-        <p>No mineral ready for ritual. Visit Workshop to buy one.</p>
-        <p class="hint-text"><a href="/workshop">Go to Workshop</a></p>
+        <p>No minerals yet. Your first step is to buy one in Workshop.</p>
+        <p class="hint-text">Once purchased, it becomes your active ritual target automatically.</p>
+        <p><a class="empty-state-link" href="/workshop">Go to Workshop</a></p>
       {/if}
     {:else if selectedProgress?.ok}
       <p class="mineral-title">
@@ -418,9 +419,11 @@
     {/if}
   </section>
 
-  <div class:secondary-panel={ritualIsRunning}>
-    <RitualSlotsPanel slots={ritualSlotItems} onSelectSlot={handleSelectRitualSlot} />
-  </div>
+  {#if hasInventory}
+    <div class:secondary-panel={ritualIsRunning}>
+      <RitualSlotsPanel slots={ritualSlotItems} onSelectSlot={handleSelectRitualSlot} />
+    </div>
+  {/if}
 
   {#if lastActionMessage}
     <section aria-labelledby="last-action-heading" class="last-action-panel">
@@ -675,6 +678,12 @@
   .last-action-panel {
     background: var(--color-surface);
     color: var(--color-muted-text);
+  }
+
+  .empty-state-link {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
   }
 
   @media (min-width: 40rem) {

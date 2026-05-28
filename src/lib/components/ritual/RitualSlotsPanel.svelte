@@ -17,7 +17,11 @@
   <h2 id="ritual-slots-heading">Ritual Slots</h2>
 
   {#if slots.length === 0}
-    <p>No Ritual Slots configured. Add them in Vault &gt; Materials.</p>
+    <p>No Ritual Slots configured yet.</p>
+    <p class="slot-meta">
+      Add quick-access minerals in
+      <a class="slot-link" href="/vault">Vault &gt; Materials</a>.
+    </p>
   {:else}
     <ul class="slot-list">
       {#each slots as slot}
@@ -79,6 +83,10 @@
     margin-top: 0.25rem;
     color: var(--color-muted-text);
     font-size: 0.875rem;
+  }
+
+  .slot-link {
+    font-weight: 600;
   }
 
   .slot-item :global(button) {

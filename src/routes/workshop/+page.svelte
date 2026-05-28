@@ -9,6 +9,7 @@
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: currentEssence = $sanctuaryStore.player.essence;
   $: inventory = $sanctuaryStore.inventory;
+  $: isFirstRun = inventory.length === 0;
   $: ownedByType = inventory.reduce<Record<string, number>>((counts, mineral) => {
     counts[mineral.materialType] = (counts[mineral.materialType] ?? 0) + 1;
     return counts;
@@ -97,6 +98,13 @@
     <h1 id="workshop-heading">Workshop</h1>
     <p class="section-intro">Buy minerals with Essence to prepare future rituals.</p>
   </header>
+
+  {#if isFirstRun}
+    <section aria-labelledby="first-step-heading" class="first-step-panel">
+      <h2 id="first-step-heading">First step</h2>
+      <p>Buy your first mineral to begin ritual progression.</p>
+    </section>
+  {/if}
 
   <section aria-labelledby="materials-heading" class="materials-panel">
     <h2 id="materials-heading">Ritual Materials</h2>
@@ -200,6 +208,7 @@
   }
 
   .materials-panel,
+  .first-step-panel,
   .last-action-panel {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
@@ -207,6 +216,10 @@
     padding: var(--space-2);
     display: grid;
     gap: var(--space-2);
+  }
+
+  .first-step-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
   .material-list {

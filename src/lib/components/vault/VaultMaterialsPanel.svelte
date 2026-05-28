@@ -57,7 +57,9 @@
   {/if}
 
   {#if rows.length === 0}
-    <p>No actionable minerals in inventory.</p>
+    <p>No owned minerals yet.</p>
+    <p class="hint-text">Purchased minerals will appear here for selection and slot assignment.</p>
+    <p><a class="empty-state-link" href="/workshop">Go to Workshop</a></p>
   {:else}
     <ul class="card-list">
       {#each rows as row}
@@ -153,6 +155,12 @@
 
   .hint-text {
     color: var(--color-muted-text);
+  }
+
+  .empty-state-link {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
   }
 
   .summary-strip {
