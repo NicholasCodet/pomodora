@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { dev } from '$app/environment';
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import Button from '$lib/components/Button.svelte';
   import RitualCountdown from '$lib/components/ritual/RitualCountdown.svelte';
   import RitualDurationPicker from '$lib/components/ritual/RitualDurationPicker.svelte';
@@ -29,11 +29,19 @@
   let lastActionMessage = '';
   let latestReveal: RevealMoment | null = null;
   let isRevealModalOpen = false;
+  let revealModalElement: HTMLDivElement | null = null;
+  let isBodyScrollLocked = false;
+  let previousBodyOverflow = '';
+  let previousBodyTouchAction = '';
   let selectedDurationMinutes: RitualDurationPreset = 30;
   let isDurationPickerOpen = false;
 
   onMount(() => {
     sanctuaryStore.ensureRitualSelection();
+  });
+
+  onDestroy(() => {
+    unlockBodyScroll();
   });
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
@@ -71,6 +79,12 @@
       : hasInventory
         ? 'No active mineral selected yet. Ritual Slots are used as default fallback.'
         : 'No mineral ready for ritual. Visit Workshop to buy one.';
+  $: if (isRevealModalOpen) {
+    lockBodyScroll();
+    void focusRevealModal();
+  } else {
+    unlockBodyScroll();
+  }
 
   function getMaterialLabel(materialType: (typeof shopMaterials)[number]['type']): string {
     const material = shopMaterials.find((entry) => entry.type === materialType);
@@ -188,10 +202,43 @@
     isRevealModalOpen = false;
   }
 
-  function handleRevealModalKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
+  function handleRevealBackdropPointerDown(event: PointerEvent): void {
+    if (event.target === event.currentTarget) {
       closeRevealModal();
     }
+  }
+
+  function handleRevealModalKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && isRevealModalOpen) {
+      closeRevealModal();
+    }
+  }
+
+  function lockBodyScroll(): void {
+    if (isBodyScrollLocked || typeof document === 'undefined') {
+      return;
+    }
+
+    previousBodyOverflow = document.body.style.overflow;
+    previousBodyTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    isBodyScrollLocked = true;
+  }
+
+  function unlockBodyScroll(): void {
+    if (!isBodyScrollLocked || typeof document === 'undefined') {
+      return;
+    }
+
+    document.body.style.overflow = previousBodyOverflow;
+    document.body.style.touchAction = previousBodyTouchAction;
+    isBodyScrollLocked = false;
+  }
+
+  async function focusRevealModal(): Promise<void> {
+    await tick();
+    revealModalElement?.focus();
   }
 
   async function handleGoToCollection(): Promise<void> {
@@ -356,12 +403,15 @@
       {/if}
 
       {#if dev}
-        <div class="debug-actions">
-          <p class="hint-text">Debug tools (development only)</p>
-          <Button variant="secondary" on:click={handleCompleteInstantDebug}>
-            Complete instantly (debug)
-          </Button>
-        </div>
+        <details class="dev-tools-panel">
+          <summary>Developer tools</summary>
+          <div class="dev-tools-body">
+            <p class="hint-text">Development only.</p>
+            <Button variant="secondary" on:click={handleCompleteInstantDebug}>
+              Instant complete ritual
+            </Button>
+          </div>
+        </details>
       {/if}
     {:else}
       <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
@@ -372,20 +422,24 @@
     <RitualSlotsPanel slots={ritualSlotItems} onSelectSlot={handleSelectRitualSlot} />
   </div>
 
-  <section aria-labelledby="last-action-heading" class="last-action-panel">
-    <h2 id="last-action-heading">Last Action</h2>
-    <p>{lastActionMessage || 'No action yet.'}</p>
-  </section>
+  {#if lastActionMessage}
+    <section aria-labelledby="last-action-heading" class="last-action-panel">
+      <h2 id="last-action-heading">Recent update</h2>
+      <p>{lastActionMessage}</p>
+    </section>
+  {/if}
 </section>
 
 {#if isRevealModalOpen && latestReveal}
-  <div class="modal-backdrop" role="presentation">
+  <div class="modal-backdrop" role="presentation" on:pointerdown={handleRevealBackdropPointerDown}>
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="reveal-modal-heading"
       class="reveal-modal"
       tabindex="-1"
+      bind:this={revealModalElement}
+      on:pointerdown|stopPropagation
     >
       <h2 id="reveal-modal-heading">Artifact revealed</h2>
       <p class="reveal-artifact-name">{latestReveal.artifactName}</p>
@@ -494,9 +548,24 @@
     font-weight: 600;
   }
 
-  .debug-actions {
+  .dev-tools-panel {
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-background);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .dev-tools-panel summary {
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--color-muted-text);
+  }
+
+  .dev-tools-body {
     display: grid;
     gap: var(--space-1);
+    margin-top: var(--space-1);
   }
 
   .reveal-moment-panel {
@@ -605,6 +674,7 @@
 
   .last-action-panel {
     background: var(--color-surface);
+    color: var(--color-muted-text);
   }
 
   @media (min-width: 40rem) {

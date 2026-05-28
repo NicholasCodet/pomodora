@@ -161,10 +161,12 @@
     </ul>
   </section>
 
-  <section aria-labelledby="last-action-heading" class="last-action-panel">
-    <h2 id="last-action-heading">Last Action</h2>
-    <p>{lastActionMessage || 'No action yet.'}</p>
-  </section>
+  {#if lastActionMessage}
+    <section aria-labelledby="last-action-heading" class="last-action-panel">
+      <h2 id="last-action-heading">Recent update</h2>
+      <p>{lastActionMessage}</p>
+    </section>
+  {/if}
 </section>
 
 <style>
@@ -321,6 +323,7 @@
 
   .last-action-panel {
     background: var(--color-surface);
+    color: var(--color-muted-text);
   }
 
   @media (min-width: 40rem) {
