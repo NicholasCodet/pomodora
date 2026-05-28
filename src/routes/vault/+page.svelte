@@ -3,6 +3,7 @@
   import {
     RITUAL_SLOT_LIMIT,
     getCollectionArtifactViews,
+    getMaterialStageThresholds,
     getMineralProgressView,
     getShopMaterialStates,
   } from '$lib/app/sanctuary';
@@ -29,6 +30,7 @@
   $: ritualSlotLimitReached = ritualSlotMineralIds.length >= RITUAL_SLOT_LIMIT;
   $: inventoryRows = $sanctuaryStore.inventory.map((mineral) => {
     const progress = getMineralProgressView(mineral);
+    const compactStageProgress = buildCompactStageProgress(progress);
 
     return {
       mineralId: mineral.id,
@@ -37,6 +39,10 @@
       workedMinutes: mineral.workedMinutes,
       stageLabel: getStageLabel(progress),
       remainingToNextStageLabel: getRemainingStageLabel(progress),
+      progressPercent: compactStageProgress?.percentage ?? null,
+      progressText: compactStageProgress?.remainingText ?? 'Progress unavailable',
+      progressAriaLabel: compactStageProgress?.ariaLabel ?? 'Progress unavailable',
+      isCompleted: compactStageProgress?.isCompleted ?? false,
       slotStateLabel: ritualSlotMineralIds.includes(mineral.id) ? 'Slotted' : 'Not slotted',
       isSelected: $sanctuaryStore.selectedMineralId === mineral.id,
       isSlotted: ritualSlotMineralIds.includes(mineral.id),
@@ -97,6 +103,45 @@
     }
 
     return `${progress.view.remainingMinutesToNextStage} min`;
+  }
+
+  function buildCompactStageProgress(progress: ReturnType<typeof getMineralProgressView>): {
+    percentage: number;
+    remainingText: string;
+    ariaLabel: string;
+    isCompleted: boolean;
+  } | null {
+    if (!progress.ok) {
+      return null;
+    }
+
+    const view = progress.view;
+    if (view.isCompleted) {
+      return {
+        percentage: 100,
+        remainingText: 'Reveal ready',
+        ariaLabel: 'Mineral fully refined and ready to reveal',
+        isCompleted: true,
+      };
+    }
+
+    const thresholds = getMaterialStageThresholds(view.materialType);
+    const stageStart = view.currentStage <= 0 ? 0 : (thresholds[view.currentStage - 1] ?? 0);
+    const stageEnd = thresholds[view.currentStage] ?? view.nextThreshold ?? stageStart;
+    const span = Math.max(1, stageEnd - stageStart);
+    const progressed = Math.min(span, Math.max(0, view.workedMinutes - stageStart));
+    const percentage = Math.round((progressed / span) * 100);
+    const remainingText =
+      view.remainingMinutesToNextStage === null
+        ? 'Remaining time unavailable'
+        : `${view.remainingMinutesToNextStage} min remaining`;
+
+    return {
+      percentage,
+      remainingText,
+      ariaLabel: `${view.currentStage} of ${view.stageCount} stages, ${remainingText}`,
+      isCompleted: false,
+    };
   }
 
   function handleSelectMineral(mineralId: string): void {

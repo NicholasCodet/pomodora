@@ -9,6 +9,10 @@
     workedMinutes: number;
     stageLabel: string;
     remainingToNextStageLabel: string;
+    progressPercent: number | null;
+    progressText: string;
+    progressAriaLabel: string;
+    isCompleted: boolean;
     slotStateLabel: string;
     isSelected: boolean;
     isSlotted: boolean;
@@ -98,6 +102,27 @@
                 <dd>{row.slotStateLabel}</dd>
               </div>
             </dl>
+
+            <section class="card-progress" aria-label="Refinement progress">
+              <p class="progress-stage">{row.stageLabel}</p>
+              {#if row.progressPercent !== null}
+                <progress
+                  class="progress-bar"
+                  value={row.progressPercent}
+                  max="100"
+                  aria-label={row.progressAriaLabel}
+                ></progress>
+                <p class={`progress-hint ${row.isCompleted ? 'progress-ready' : ''}`}>
+                  {#if row.isCompleted}
+                    Mineral fully refined. Reveal ready.
+                  {:else}
+                    {row.progressText}
+                  {/if}
+                </p>
+              {:else}
+                <p class="progress-hint">Progress unavailable</p>
+              {/if}
+            </section>
 
             <div class="card-actions" aria-label="Material actions">
               <Button
@@ -253,6 +278,33 @@
     display: grid;
     gap: var(--space-1);
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-progress {
+    border-top: 1px dashed var(--color-border);
+    padding-top: var(--space-2);
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .progress-stage {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 0.6rem;
+  }
+
+  .progress-hint {
+    font-size: 0.85rem;
+    color: var(--color-muted-text);
+  }
+
+  .progress-ready {
+    color: #1e3a8a;
+    font-weight: 700;
   }
 
   dt {
