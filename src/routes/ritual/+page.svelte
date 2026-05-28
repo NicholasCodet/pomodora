@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { dev } from '$app/environment';
   import { onMount } from 'svelte';
   import Button from '$lib/components/Button.svelte';
@@ -16,8 +17,18 @@
   const RITUAL_DURATION_PRESETS = [15, 30, 45] as const;
 
   type RitualDurationPreset = (typeof RITUAL_DURATION_PRESETS)[number];
+  type RevealRarity = 'common' | 'rare' | 'epic';
+  interface RevealMoment {
+    artifactName: string;
+    rarity: RevealRarity;
+    materialLabel: string;
+    collectionCount: number;
+    revealedAt: number;
+  }
 
   let lastActionMessage = '';
+  let latestReveal: RevealMoment | null = null;
+  let isRevealModalOpen = false;
   let selectedDurationMinutes: RitualDurationPreset = 30;
   let isDurationPickerOpen = false;
 
@@ -100,9 +111,20 @@
 
   function handleRevealSelectedMineral(): void {
     const result = sanctuaryStore.revealSelectedMineral();
-    lastActionMessage = result.ok
-      ? `Artifact revealed: ${result.artifact.name} (${result.artifact.rarity}).`
-      : `Reveal failed: ${formatFailureReason(result.reason)}.`;
+    if (result.ok) {
+      latestReveal = {
+        artifactName: result.artifact.name,
+        rarity: result.artifact.rarity,
+        materialLabel: getMaterialLabel(result.artifact.materialType),
+        collectionCount: result.state.collection.length,
+        revealedAt: Date.now(),
+      };
+      isRevealModalOpen = true;
+      lastActionMessage = 'Reveal completed and artifact added to collection.';
+      return;
+    }
+
+    lastActionMessage = `Reveal failed: ${formatFailureReason(result.reason)}.`;
   }
 
   function handleSelectRitualSlot(mineralId: string): void {
@@ -145,11 +167,43 @@
 
     return `${selectedProgress.view.remainingMinutesToNextStage} min to next stage`;
   }
+
+  function formatRarityLabel(rarity: RevealRarity): string {
+    if (rarity === 'epic') {
+      return 'Epic';
+    }
+
+    if (rarity === 'rare') {
+      return 'Rare';
+    }
+
+    return 'Common';
+  }
+
+  function getRarityClass(rarity: RevealRarity): string {
+    return `reveal-rarity-${rarity}`;
+  }
+
+  function closeRevealModal(): void {
+    isRevealModalOpen = false;
+  }
+
+  function handleRevealModalKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      closeRevealModal();
+    }
+  }
+
+  async function handleGoToCollection(): Promise<void> {
+    isRevealModalOpen = false;
+    await goto('/vault');
+  }
 </script>
 
 <svelte:head>
   <title>Ritual | Pomodora Sanctuary</title>
 </svelte:head>
+<svelte:window on:keydown={handleRevealModalKeydown} />
 
 <section aria-labelledby="ritual-heading" class="panel ritual-panel">
   <header>
@@ -276,6 +330,31 @@
         {/if}
       </section>
 
+      {#if latestReveal}
+        <section aria-labelledby="latest-reveal-heading" aria-live="polite" class="reveal-moment-panel">
+          <h3 id="latest-reveal-heading">Latest Revelation</h3>
+          <p class="reveal-kicker">Artifact added to collection</p>
+          <p class="reveal-artifact-name">{latestReveal.artifactName}</p>
+          <p class={`reveal-rarity ${getRarityClass(latestReveal.rarity)}`}>
+            {formatRarityLabel(latestReveal.rarity)}
+          </p>
+          <dl class="reveal-meta">
+            <div>
+              <dt>Source Material</dt>
+              <dd>{latestReveal.materialLabel}</dd>
+            </div>
+            <div>
+              <dt>Collection Total</dt>
+              <dd>{latestReveal.collectionCount}</dd>
+            </div>
+            <div>
+              <dt>Revealed At</dt>
+              <dd>{new Date(latestReveal.revealedAt).toLocaleTimeString()}</dd>
+            </div>
+          </dl>
+        </section>
+      {/if}
+
       {#if dev}
         <div class="debug-actions">
           <p class="hint-text">Debug tools (development only)</p>
@@ -298,6 +377,40 @@
     <p>{lastActionMessage || 'No action yet.'}</p>
   </section>
 </section>
+
+{#if isRevealModalOpen && latestReveal}
+  <div class="modal-backdrop" role="presentation">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reveal-modal-heading"
+      class="reveal-modal"
+      tabindex="-1"
+    >
+      <h2 id="reveal-modal-heading">Artifact revealed</h2>
+      <p class="reveal-artifact-name">{latestReveal.artifactName}</p>
+      <p class={`reveal-rarity ${getRarityClass(latestReveal.rarity)}`}>
+        {formatRarityLabel(latestReveal.rarity)}
+      </p>
+      <dl class="reveal-meta">
+        <div>
+          <dt>Source Material</dt>
+          <dd>{latestReveal.materialLabel}</dd>
+        </div>
+        <div>
+          <dt>Collection</dt>
+          <dd>{latestReveal.collectionCount} total</dd>
+        </div>
+      </dl>
+      <p class="hint-text reveal-collection-status">Added to Collection.</p>
+
+      <div class="modal-actions">
+        <Button variant="primary" on:click={handleGoToCollection}>Go to Collection</Button>
+        <Button variant="secondary" on:click={closeRevealModal}>Continue</Button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .panel {
@@ -333,6 +446,7 @@
   .last-action-panel,
   .setup-panel,
   .reveal-panel,
+  .reveal-moment-panel,
   .idle-progress,
   .summary-grid div {
     border: 1px solid var(--color-border);
@@ -385,8 +499,108 @@
     gap: var(--space-1);
   }
 
+  .reveal-moment-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border-color: #a3b2c7;
+    gap: var(--space-1);
+  }
+
+  .reveal-kicker {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-muted-text);
+  }
+
+  .reveal-artifact-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .reveal-rarity {
+    width: fit-content;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .reveal-rarity-common {
+    color: #374151;
+    background: #f3f4f6;
+    border-color: #d1d5db;
+  }
+
+  .reveal-rarity-rare {
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-color: #93c5fd;
+  }
+
+  .reveal-rarity-epic {
+    color: #6d28d9;
+    background: #ede9fe;
+    border-color: #c4b5fd;
+  }
+
+  .reveal-meta {
+    margin: 0;
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: 1fr;
+  }
+
   .secondary-panel {
     opacity: 0.72;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.5);
+    display: grid;
+    place-items: center;
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+
+  .reveal-modal {
+    box-sizing: border-box;
+    border: 1px solid #a3b2c7;
+    border-radius: var(--radius-md);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    padding: var(--space-2);
+    display: grid;
+    gap: var(--space-1);
+    width: min(calc(100vw - 32px), 23.75rem);
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+  }
+
+  .modal-actions {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .modal-actions :global(button) {
+    width: 100%;
+  }
+
+  .reveal-modal h2 {
+    margin: 0;
+  }
+
+  .reveal-collection-status {
+    font-size: 0.88rem;
   }
 
   .last-action-panel {
@@ -396,6 +610,10 @@
   @media (min-width: 40rem) {
     .summary-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .reveal-meta {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 </style>
