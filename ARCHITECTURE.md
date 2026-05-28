@@ -1,14 +1,16 @@
 # Architecture
 
-This project uses a domain-first architecture:
-- TypeScript domain engine as source of truth
-- SvelteKit UI layer on top through a thin app bridge
+Pomodora Sanctuary uses a domain-first architecture:
+- `src/core` is the source of truth for business rules.
+- SvelteKit UI consumes domain behavior through a thin app bridge.
+- UI state/persistence lives in a global store layer, not in route components.
 
-## Structure
+## Current Structure
 
 ```txt
-svelte.config.js
-vite.config.ts
+static/
+  icons/
+    sprite.svg
 src/
   core/
     models.ts
@@ -20,6 +22,7 @@ src/
     ritual.ts
     reveal.ts
     selection.ts
+    slots.ts
     shop.ts
     summary.ts
     use-cases.ts
@@ -30,72 +33,73 @@ src/
   lib/
     app/
       sanctuary.ts
-    components/
-      ShopMaterialTable.svelte
     stores/
+      sanctuaryStore.ts
+    design/
+      tokens.css
+    components/
+      Button.svelte
+      Icon.svelte
+      ritual/
+        RitualCountdown.svelte
+        RitualDurationPicker.svelte
+        RitualSlotsPanel.svelte
+      vault/
+        VaultViewSwitch.svelte
+        VaultMaterialsPanel.svelte
+        VaultCollectionPanel.svelte
+  routes/
+    +layout.svelte
+    +page.ts
+    ritual/+page.svelte
+    workshop/+page.svelte
+    vault/+page.svelte
   utils/
     id.ts
     time.ts
     storage.ts
-  routes/
-    +page.ts
-    +page.svelte
   index.ts
 ```
 
-## Core Layer (`src/core`)
+## Layer Responsibilities
 
-- `models.ts`: domain types and interfaces only (no runtime logic).
-- `constants.ts`: shared domain constants (economy, unlock thresholds, storage key).
-- `state.ts`: initial state factories.
-- `progression.ts`: progression validation and stage/unlock read helpers.
-- `rng.ts`: deterministic/random selection helpers.
-- `purchase.ts`: buy mineral flow and purchase validation.
-- `ritual.ts`: completed ritual application and essence reward rule.
-- `reveal.ts`: artifact reveal flow when mineral is complete.
-- `selection.ts`: selected mineral action and read helper.
-- `shop.ts`: read-only shop material states.
-- `summary.ts`: read-only player progression summary snapshot.
-- `use-cases.ts`: thin application layer that composes domain actions for user-intent flows.
-- `logic.ts`: barrel re-export for stable imports (`./core/logic`).
+### `src/core` (Domain)
+- Pure domain actions and read helpers.
+- Game rules: purchase, selection, ritual completion, reveal, unlocks, slots.
+- Framework-agnostic and immutable result pattern (`ok: true | false`).
 
-Core stays framework-agnostic and owns business rules.
+### `src/lib/app/sanctuary.ts` (App Bridge)
+- UI-facing API for routes/components/stores.
+- Composes core + data + utils.
+- Must stay thin and never duplicate domain rules.
 
-## App Bridge (`src/lib/app`)
+### `src/lib/stores/sanctuaryStore.ts` (UI State + Runtime)
+- Single reactive UI state source.
+- Handles persistence hydration/saving via `localStorage`.
+- Owns ritual runtime state (`isRunning`, duration, `endTimestamp`) and timer ticking.
+- Calls the app bridge for all business actions.
 
-- `sanctuary.ts`: UI-facing application boundary.
-- It composes domain/data/util functions for SvelteKit routes/components.
-- It must stay thin and never duplicate business rules.
+### `src/routes` and `src/lib/components` (Presentation)
+- Route structure:
+  - `/ritual`: timer flow, selected mineral progress, reveal.
+  - `/workshop`: mineral acquisition with availability states.
+  - `/vault`: materials management and collection view.
+- `+layout.svelte` provides shared shell, compact summary, and mobile bottom tab navigation.
+- Components are mostly presentational and should not contain domain logic.
 
-## UI Layer (`src/routes`, `src/lib/components`)
+### `src/data`
+- Static game content (`materials`, `artifacts`).
 
-- Routes and components render data and handle interaction concerns.
-- UI reads/dispatches through `src/lib/app/sanctuary.ts`.
-- Domain rules remain in `src/core`.
+### `src/utils`
+- Generic technical helpers (`id`, `time`, `storage`).
 
-## Data Layer (`src/data`)
+### Icons
+- Functional icons come from a single SVG sprite: `static/icons/sprite.svg`.
+- `Icon.svelte` references symbols (`/icons/sprite.svg#icon-*`) with decorative defaults.
 
-- `materials.ts`: static material definitions.
-- `artifacts.ts`: static artifact definitions.
+### Sandbox
+- `src/index.ts` remains an integration sandbox for domain/app checks outside UI.
 
-Data files contain content, not behavior.
-
-## Utilities (`src/utils`)
-
-- `id.ts`: local ID helper.
-- `time.ts`: generic time conversions and timestamp helper.
-- `storage.ts`: serialization/deserialization and runtime validation for persisted `GameState`.
-
-Utilities must stay generic and avoid game rules.
-
-## Sandbox (`src/index.ts`)
-
-`index.ts` is an integration sandbox.  
-It orchestrates scenarios and logs behavior, but does not define domain rules.
-
-## Boundaries
-
-- Domain actions mutate state immutably and return `{ ok: true | false }` results.
-- Domain read helpers never mutate state.
-- Use-case functions compose domain actions for user-intent flows.
-- UI must consume domain through the app bridge, not by re-implementing rules.
+### Boundary Rules
+- Do not move business rules into Svelte components.
+- UI/store/app layers orchestrate; `src/core` decides game behavior.

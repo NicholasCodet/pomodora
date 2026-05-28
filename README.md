@@ -1,158 +1,75 @@
 # Pomodora Sanctuary
 
-Pomodora Sanctuary is a small experimental project designed to explore **TypeScript architecture**, domain modeling, and progressive application design.
+Pomodora Sanctuary is a SvelteKit + TypeScript focus ritual app with a domain-first architecture.
 
-The project now has:
-- a domain-first TypeScript engine
-- a thin SvelteKit UI layer on top
+The current MVP includes:
+- Ritual / Workshop / Vault routes
+- mobile bottom tab navigation
+- ritual timer flow (start/cancel, dev instant completion)
+- ritual slots (up to 3 quick-access minerals)
+- Workshop buy flow with unlock/affordability states
+- Vault split between actionable materials and revealed collection
+- persisted global state (including ritual runtime resume behavior)
 
----
+## Core Loop
 
-## 🎯 Project Goals
+1. Buy a mineral in Workshop
+2. Select or auto-select an active mineral
+3. Complete rituals to add worked minutes
+4. Gain Essence from completed ritual minutes
+5. Reveal completed minerals into Collection
 
-This project is designed to:
-
-- Learn TypeScript through real-world architecture
-- Build a clean and maintainable domain layer
-- Understand separation between logic and UI
-- Design a scalable application from first principles
-- Explore game design and product thinking
-
-This is a **learning-first project**, not a production-ready application.
-
----
-
-## 🧠 Project Philosophy
-
-The project follows a **logic-first approach**:
-
-1. Define data structures
-2. Implement core logic
-3. Validate systems
-4. Introduce UI later
-5. Iterate on experience
-
-UI integration is intentionally incremental to avoid mixing concerns too early.
-
----
-
-## 🔁 Core Concept
-
-The application is built around a **focus ritual system**:
-
-- Users perform timed sessions (rituals)
-- Each session contributes to refining a mineral
-- Minerals evolve over time based on worked minutes
-- Once complete, a mineral reveals a hidden artifact
-- Artifacts are collected and tracked
-
----
-
-## 💰 Economy
-
-### Essence
-
-Essence is the main resource.
-
-Formula:
+Essence formula:
 
 ```ts
 essence = Math.floor(minutes / 10);
 ```
 
-Examples:
-
-- 30 min → 3 Essence
-- 45 min → 4 Essence
-- 60 min → 6 Essence
-
-Essence is used to acquire new minerals.
-
----
-
-## 🪨 Minerals (MVP)
-
-| Material  | Cost | Stages | Total Time |
-|----------|------|--------|------------|
-| Clay   | 1    | 3      | ~90 min    |
-| Limestone | 10   | 4      | ~180 min   |
-| Marble   | 40   | 5      | ~300 min   |
-
-Each mineral has 3 possible outcomes:
-
-- Common (60%)
-- Rare (30%)
-- Epic (10%)
-
-The outcome is determined at purchase but revealed only when refinement is complete.
-
----
-
-## 🧠 Core Systems
-
-### Mineral Progression
-- Based on **worked minutes**
-- Not based on number of sessions
-
-### RNG (Soft Randomness)
-- Artifact outcome is determined at purchase
-- Revealed only at completion
-
-### Inventory & Collection (future UI layer)
-- Multiple minerals owned
-- One active at a time
-- Artifact collection tracking
-
----
-
-## 🧰 Tech Stack (Current Phase)
+## Tech Stack
 
 - TypeScript
 - SvelteKit
-- Node environment
+- Svelte 5
+- Vite
 
----
+## Development
 
-## 🔮 Planned Evolution
+```bash
+npm install
+npm run dev
+```
 
-Later stages will expand:
+Useful scripts:
+- `npm run dev`: start SvelteKit dev server
+- `npm run typecheck`: run Svelte + TypeScript checks
+- `npm run build`: production build
+- `npm run preview`: preview production build locally
+- `npm run sandbox`: run domain/app sandbox (`src/index.ts`) in watch mode
+- `npm run sandbox:run`: run sandbox once
 
-- UI interactions and state synchronization
-- local persistence wiring in UI
-- optional backend sync (Supabase)
+## Project Structure (High Level)
 
----
+```txt
+src/
+  core/              # Domain rules and pure business logic
+  data/              # Static materials/artifacts definitions
+  lib/
+    app/             # Thin app bridge (sanctuary.ts)
+    stores/          # Global reactive store + persistence + ritual runtime
+    components/      # UI components (shared, ritual, vault)
+    design/          # Design tokens
+  routes/            # SvelteKit pages/layout
+  utils/             # Generic utilities (id/time/storage)
+  index.ts           # Domain/app integration sandbox
+static/icons/
+  sprite.svg         # SVG icon sprite
+```
 
-## 🧱 Project Structure
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full layer boundaries and responsibilities.
 
-See full documentation in:
+## Architecture Notes
 
-👉 `ARCHITECTURE.md`
-
----
-
-## 📍 Current Status
-
-TypeScript domain layer is in place and split by responsibility (`purchase`, `ritual`, `reveal`, `selection`, `shop`, `progression`, `state`, `use-cases`).
-
-Current working flow includes:
-
-- purchasing minerals with unlock/cost validation
-- selecting active mineral
-- applying completed rituals
-- revealing completed artifacts
-- read-only helpers for shop state and selected mineral progress
-- persistence serialization/validation helpers
-
-`src/index.ts` is used as an integration sandbox to validate scenarios and edge cases.
-SvelteKit currently exposes a minimal read-only page through a thin app bridge (`src/lib/app/sanctuary.ts`).
-
----
-
-## 🧠 Notes
-
-- Keep logic independent from UI
-- Prefer pure functions
-- Avoid premature abstraction
-- Focus on clarity over complexity
-- Build small, iterate fast
+- `src/core` is the source of truth for business behavior.
+- UI never re-implements domain rules.
+- `src/lib/app/sanctuary.ts` is the boundary between UI/store and core logic.
+- `src/lib/stores/sanctuaryStore.ts` owns runtime UI state and persistence wiring.

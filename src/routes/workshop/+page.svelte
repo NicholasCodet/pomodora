@@ -8,6 +8,11 @@
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: currentEssence = $sanctuaryStore.player.essence;
+  $: inventory = $sanctuaryStore.inventory;
+  $: ownedByType = inventory.reduce<Record<string, number>>((counts, mineral) => {
+    counts[mineral.materialType] = (counts[mineral.materialType] ?? 0) + 1;
+    return counts;
+  }, {});
 
   function getShopStateLabel(material: (typeof shopMaterials)[number]): string {
     if (material.canPurchase) {
@@ -25,18 +30,23 @@
     return 'Unavailable';
   }
 
+  function getOwnedCountLabel(materialType: (typeof shopMaterials)[number]['type']): string {
+    const ownedCount = ownedByType[materialType] ?? 0;
+    return ownedCount === 0 ? 'Owned: none yet' : `Owned: ${ownedCount}`;
+  }
+
   function getShopStateHint(material: (typeof shopMaterials)[number]): string {
     if (material.canPurchase) {
-      return 'Ready to buy now.';
+      return 'Ready now. Buying sets this mineral as your active ritual target.';
     }
 
     if (material.blockedReason === 'material_locked') {
-      return 'Progress further to unlock this material.';
+      return 'Locked by progression. Complete more rituals to unlock this tier.';
     }
 
     if (material.blockedReason === 'insufficient_essence') {
       const missingEssence = Math.max(0, material.cost - currentEssence);
-      return `Need ${missingEssence} more Essence.`;
+      return `Need ${missingEssence} more Essence to begin this tier.`;
     }
 
     return 'This material is not purchasable right now.';
@@ -52,6 +62,18 @@
     }
 
     return 'status-blocked';
+  }
+
+  function getToneClass(materialType: (typeof shopMaterials)[number]['type']): string {
+    if (materialType === 'clay') {
+      return 'material-clay';
+    }
+
+    if (materialType === 'limestone') {
+      return 'material-limestone';
+    }
+
+    return 'material-marble';
   }
 
   function handleBuyMaterial(materialType: (typeof shopMaterials)[number]['type']): void {
@@ -73,24 +95,27 @@
 <section aria-labelledby="workshop-heading" class="panel workshop-panel">
   <header>
     <h1 id="workshop-heading">Workshop</h1>
-    <p class="section-intro">Buy minerals that are unlocked and affordable.</p>
+    <p class="section-intro">Buy minerals with Essence to prepare future rituals.</p>
   </header>
 
   <section aria-labelledby="materials-heading" class="materials-panel">
-    <h2 id="materials-heading">Available Materials</h2>
+    <h2 id="materials-heading">Ritual Materials</h2>
 
     <ul class="material-list">
       {#each shopMaterials as material}
         <li>
-          <article class="material-card">
+          <article class={`material-card ${getToneClass(material.type)}`}>
             <header class="material-header">
               <h3>{material.name}</h3>
-              <p class="material-cost">Cost: {material.cost} Essence</p>
             </header>
 
             <p class="material-state">
               <span class={`state-badge ${getStatusClass(material)}`}>
-                {#if material.blockedReason === 'material_locked'}
+                {#if material.canPurchase}
+                  <span class="badge-with-icon"><Icon name="check" size={13} />{getShopStateLabel(material)}</span>
+                {:else if material.blockedReason === 'insufficient_essence'}
+                  <span class="badge-with-icon"><Icon name="essence" size={13} />{getShopStateLabel(material)}</span>
+                {:else if material.blockedReason === 'material_locked'}
                   <span class="badge-with-icon"><Icon name="lock" size={13} />{getShopStateLabel(material)}</span>
                 {:else}
                   {getShopStateLabel(material)}
@@ -99,13 +124,37 @@
               <span class="state-hint">{getShopStateHint(material)}</span>
             </p>
 
-            <Button
-              variant={material.canPurchase ? 'primary' : 'secondary'}
-              disabled={!material.canPurchase}
-              on:click={() => handleBuyMaterial(material.type)}
-            >
-              Buy
-            </Button>
+            <dl class="material-meta">
+              <div>
+                <dt>Cost</dt>
+                <dd class="cost-value">
+                  <span class="badge-with-icon"><Icon name="essence" size={13} />{material.cost} Essence</span>
+                </dd>
+              </div>
+              <div>
+                <dt>Ownership</dt>
+                <dd>{getOwnedCountLabel(material.type)}</dd>
+              </div>
+            </dl>
+
+            <div class="action-row">
+              <Button
+                variant={material.canPurchase ? 'primary' : 'secondary'}
+                disabled={!material.canPurchase}
+                on:click={() => handleBuyMaterial(material.type)}
+              >
+                Buy {material.name}
+              </Button>
+              <p class="action-hint">
+                {#if material.blockedReason === 'material_locked'}
+                  Unlock required before purchase.
+                {:else if material.blockedReason === 'insufficient_essence'}
+                  Earn more Essence through rituals.
+                {:else}
+                  Buying immediately sets this as your active mineral.
+                {/if}
+              </p>
+            </div>
           </article>
         </li>
       {/each}
@@ -143,7 +192,8 @@
   }
 
   .section-intro,
-  .state-hint {
+  .state-hint,
+  .action-hint {
     color: var(--color-muted-text);
   }
 
@@ -174,18 +224,63 @@
     gap: var(--space-2);
   }
 
-  .material-header {
-    display: grid;
-    gap: 0.25rem;
+  .material-clay {
+    border-color: #94a3b8;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   }
 
-  .material-cost {
-    font-weight: 600;
+  .material-limestone {
+    border-color: #64748b;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%);
+  }
+
+  .material-marble {
+    border-color: #334155;
+    background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%);
+  }
+
+  .material-header {
+    display: grid;
+    gap: 0.2rem;
   }
 
   .material-state {
     display: grid;
     gap: 0.35rem;
+  }
+
+  .material-meta {
+    margin: 0;
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .material-meta dt {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-muted-text);
+  }
+
+  .material-meta dd {
+    margin: 0.2rem 0 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .cost-value {
+    font-weight: 700;
+  }
+
+  .badge-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .action-row {
+    display: grid;
+    gap: 0.5rem;
   }
 
   .state-badge {
@@ -196,12 +291,6 @@
     padding: 0.15rem 0.6rem;
     font-size: 0.8rem;
     font-weight: 700;
-  }
-
-  .badge-with-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
   }
 
   .status-available {
@@ -224,6 +313,10 @@
 
   .material-card :global(button) {
     width: 100%;
+  }
+
+  .action-hint {
+    font-size: 0.88rem;
   }
 
   .last-action-panel {
