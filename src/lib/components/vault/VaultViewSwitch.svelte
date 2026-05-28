@@ -40,12 +40,12 @@
   }
 
   .switch-panel {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-background);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .vault-switch {

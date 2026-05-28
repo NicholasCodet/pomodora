@@ -221,14 +221,14 @@
 <style>
   .panel {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-md);
+    padding: var(--surface-padding-md);
   }
 
   .vault-panel {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--surface-gap-md);
   }
 
   h1,
@@ -246,12 +246,12 @@
   }
 
   .last-action-panel {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-surface);
     color: var(--color-muted-text);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 </style>

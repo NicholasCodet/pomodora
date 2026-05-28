@@ -536,14 +536,14 @@
 <style>
   .panel {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-md);
+    padding: var(--surface-padding-md);
   }
 
   .ritual-panel {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--surface-gap-md);
   }
 
   h1,
@@ -571,11 +571,11 @@
   .reveal-moment-panel,
   .idle-progress,
   .summary-grid div {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
     background: var(--color-background);
   }
 
@@ -588,7 +588,7 @@
 
   .summary-grid {
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   }
 
@@ -628,7 +628,7 @@
 
   .dev-tools-panel {
     border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-background);
     padding: var(--space-1) var(--space-2);
   }
@@ -669,10 +669,10 @@
   .reveal-rarity {
     width: fit-content;
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 0.15rem 0.6rem;
-    font-size: 0.8rem;
-    font-weight: 700;
+    border-radius: var(--chip-radius);
+    padding: var(--chip-padding-y) var(--chip-padding-x);
+    font-size: var(--chip-font-size);
+    font-weight: var(--chip-font-weight);
   }
 
   .reveal-rarity-common {
@@ -721,9 +721,9 @@
   .reveal-modal {
     box-sizing: border-box;
     border: 1px solid #a3b2c7;
-    border-radius: var(--radius-md);
+    border-radius: var(--surface-radius-md);
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
     gap: var(--space-1);
     width: min(calc(100vw - 32px), 23.75rem);

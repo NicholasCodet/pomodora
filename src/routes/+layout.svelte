@@ -97,18 +97,18 @@
   .app-shell {
     margin: 0 auto;
     max-width: 72rem;
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .app-header {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: var(--space-2);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-md);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .brand-block {
@@ -145,8 +145,8 @@
 
   .summary-item {
     background: var(--color-background);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     padding: var(--space-1) var(--space-2);
   }
 
@@ -215,8 +215,8 @@
     text-decoration: none;
     color: var(--color-text);
     background: var(--color-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     padding: 0.5rem var(--space-2);
     min-height: var(--bottom-tab-min-height);
     font-weight: 600;

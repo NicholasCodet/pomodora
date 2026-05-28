@@ -160,12 +160,12 @@
   }
 
   .content-panel {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-background);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .collection-panel {
@@ -209,12 +209,12 @@
   }
 
   .vault-card {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-surface);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .artifact-card {
@@ -233,10 +233,10 @@
   .status-chip {
     display: inline-block;
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 0.15rem 0.6rem;
-    font-size: 0.75rem;
-    font-weight: 700;
+    border-radius: var(--chip-radius);
+    padding: var(--chip-padding-y) var(--chip-padding-x);
+    font-size: var(--chip-font-size);
+    font-weight: var(--chip-font-weight);
   }
 
   .rarity-label {
@@ -263,8 +263,8 @@
 
   .visual-placeholder {
     border: 1px dashed var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2);
+    border-radius: var(--surface-radius-sm);
+    padding: var(--surface-padding-sm);
     background: var(--color-background);
     display: grid;
     gap: var(--space-1);

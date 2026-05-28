@@ -17,4 +17,26 @@
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
+
+  /* Shared UI surfaces */
+  --surface-border: 1px solid var(--color-border);
+  --surface-radius-sm: var(--radius-sm);
+  --surface-radius-md: var(--radius-md);
+  --surface-padding-sm: var(--space-2);
+  --surface-padding-md: var(--space-3);
+  --surface-gap-sm: var(--space-2);
+  --surface-gap-md: var(--space-3);
+
+  /* Shared controls */
+  --control-min-height: 2.5rem;
+  --control-padding-y: var(--space-1);
+  --control-padding-x: var(--space-3);
+  --control-font-weight: 600;
+
+  /* Shared chips/badges */
+  --chip-radius: 999px;
+  --chip-padding-y: 0.15rem;
+  --chip-padding-x: 0.6rem;
+  --chip-font-size: 0.75rem;
+  --chip-font-weight: 700;
 }

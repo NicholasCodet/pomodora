@@ -166,12 +166,12 @@
   }
 
   .content-panel {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-background);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .materials-panel {
@@ -196,8 +196,8 @@
   }
 
   .summary-strip div {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-surface);
     padding: var(--space-1) var(--space-2);
   }
@@ -223,12 +223,12 @@
   }
 
   .vault-card {
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
     background: var(--color-surface);
-    padding: var(--space-2);
+    padding: var(--surface-padding-sm);
     display: grid;
-    gap: var(--space-2);
+    gap: var(--surface-gap-sm);
   }
 
   .material-card {
@@ -249,10 +249,10 @@
   .status-chip {
     display: inline-block;
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 0.15rem 0.6rem;
-    font-size: 0.75rem;
-    font-weight: 700;
+    border-radius: var(--chip-radius);
+    padding: var(--chip-padding-y) var(--chip-padding-x);
+    font-size: var(--chip-font-size);
+    font-weight: var(--chip-font-weight);
   }
 
   .inline-icon {

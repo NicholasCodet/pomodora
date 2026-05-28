@@ -11,12 +11,13 @@
 <style>
   button {
     border: 1px solid transparent;
-    border-radius: var(--radius-sm);
+    border-radius: var(--surface-radius-sm);
     cursor: pointer;
     font: inherit;
-    font-weight: 600;
+    font-weight: var(--control-font-weight);
     line-height: 1.2;
-    padding: var(--space-1) var(--space-3);
+    min-height: var(--control-min-height);
+    padding: var(--control-padding-y) var(--control-padding-x);
     transition: background-color 0.15s ease;
   }
 
