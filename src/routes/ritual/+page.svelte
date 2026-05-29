@@ -5,6 +5,7 @@
   import Button from '$lib/components/Button.svelte';
   import RitualCountdown from '$lib/components/ritual/RitualCountdown.svelte';
   import RitualDurationPicker from '$lib/components/ritual/RitualDurationPicker.svelte';
+  import MineralMediaPanel from '$lib/components/ritual/MineralMediaPanel.svelte';
   import RitualMineralHero from '$lib/components/ritual/RitualMineralHero.svelte';
   import RitualSlotsPanel from '$lib/components/ritual/RitualSlotsPanel.svelte';
   import {
@@ -79,6 +80,9 @@
     : '';
   $: selectedMineralDescription = selectedProgress?.ok
     ? getMaterialPresentation(selectedProgress.view.materialType).shortDescription
+    : null;
+  $: selectedMineralThemeHint = selectedProgress?.ok
+    ? getMaterialPresentation(selectedProgress.view.materialType).visualThemeHint
     : null;
   $: selectedStageThresholds =
     selectedProgress?.ok ? getMaterialStageThresholds(selectedProgress.view.materialType) : null;
@@ -308,8 +312,13 @@
       statusText={timerStatusText}
       remainingMs={ritualRemainingMs}
       durationMinutes={ritualRuntime.durationMinutes}
-      onCancel={handleCancelRitual}
     />
+
+    <section aria-labelledby="running-controls-heading" class="running-cancel-panel">
+      <h2 id="running-controls-heading">Ritual Control</h2>
+      <Button variant="primary" on:click={handleCancelRitual}>Cancel current ritual</Button>
+      <p class="hint-text">Canceling interrupts the ritual and applies no progress.</p>
+    </section>
   {:else}
     <section aria-labelledby="ritual-status-heading" class="idle-status">
       <h2 id="ritual-status-heading">Ritual Status</h2>
@@ -341,50 +350,74 @@
         isCompleted={selectedProgress.view.isCompleted}
         isRunning={ritualIsRunning}
       />
-
-      {#if ritualIsRunning}
-        <section aria-labelledby="ritual-setup-heading" class="setup-panel secondary-panel">
-          <h3 id="ritual-setup-heading">Ritual Setup (Locked)</h3>
-          <p class="hint-text">
-            A ritual is active. Duration choice and mineral switching are temporarily disabled.
-          </p>
-        </section>
-      {:else}
-        <RitualDurationPicker
-          selectedDurationMinutes={selectedDurationMinutes}
-          isPickerOpen={isDurationPickerOpen}
-          isBeginDisabled={isSelectedCompleted}
-          presets={RITUAL_DURATION_PRESETS}
-          onBegin={handleBeginRitual}
-          onTogglePicker={toggleDurationPicker}
-          onSelectPreset={selectDurationPreset}
+      {#if !ritualIsRunning}
+        <MineralMediaPanel
+          materialName={selectedMineralName}
+          visualThemeHint={selectedMineralThemeHint}
         />
       {/if}
 
-      <section aria-labelledby="reveal-heading" class="reveal-panel">
-        <h3 id="reveal-heading">Reveal</h3>
-        <Button
-          variant="secondary"
-          disabled={!isSelectedCompleted || ritualIsRunning}
-          on:click={handleRevealSelectedMineral}
-        >
-          Reveal artifact
-        </Button>
-        {#if ritualIsRunning}
-          <p class="hint-text">
-            Ritual running ({ritualRuntime.durationMinutes} min). Reveal becomes available when the ritual ends.
-          </p>
-        {:else if isSelectedCompleted}
-          <p class="hint-text">This mineral is fully refined. You can reveal its artifact now.</p>
-        {:else}
-          <p class="hint-text">
-            Complete the mineral before revealing.
-            {#if selectedProgress.view.remainingMinutesToNextStage !== null}
-              Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
+      {#if ritualIsRunning}
+        <section aria-labelledby="running-secondary-heading" class="secondary-controls-panel secondary-panel">
+          <h3 id="running-secondary-heading">Secondary Controls</h3>
+
+          <section aria-labelledby="ritual-setup-heading" class="setup-panel">
+            <h4 id="ritual-setup-heading">Ritual Setup (Locked)</h4>
+            <p class="hint-text">
+              A ritual is active. Duration choice and mineral switching are temporarily disabled.
+            </p>
+          </section>
+
+          <section aria-labelledby="reveal-heading" class="reveal-panel">
+            <h4 id="reveal-heading">Reveal</h4>
+            <Button
+              variant="secondary"
+              disabled={!isSelectedCompleted || ritualIsRunning}
+              on:click={handleRevealSelectedMineral}
+            >
+              Reveal artifact
+            </Button>
+            <p class="hint-text">
+              Ritual running ({ritualRuntime.durationMinutes} min). Reveal becomes available when the ritual
+              ends.
+            </p>
+          </section>
+        </section>
+      {:else}
+        <section aria-labelledby="ritual-actions-heading" class="ritual-action-panel">
+          <h3 id="ritual-actions-heading">Ritual Action</h3>
+          <RitualDurationPicker
+            selectedDurationMinutes={selectedDurationMinutes}
+            isPickerOpen={isDurationPickerOpen}
+            isBeginDisabled={isSelectedCompleted}
+            presets={RITUAL_DURATION_PRESETS}
+            onBegin={handleBeginRitual}
+            onTogglePicker={toggleDurationPicker}
+            onSelectPreset={selectDurationPreset}
+          />
+
+          <section aria-labelledby="reveal-heading" class="reveal-panel">
+            <h4 id="reveal-heading">Reveal</h4>
+            <Button
+              variant="secondary"
+              disabled={!isSelectedCompleted || ritualIsRunning}
+              on:click={handleRevealSelectedMineral}
+            >
+              Reveal artifact
+            </Button>
+            {#if isSelectedCompleted}
+              <p class="hint-text">This mineral is fully refined. You can reveal its artifact now.</p>
+            {:else}
+              <p class="hint-text">
+                Complete the mineral before revealing.
+                {#if selectedProgress.view.remainingMinutesToNextStage !== null}
+                  Remaining to next stage: {selectedProgress.view.remainingMinutesToNextStage} min.
+                {/if}
+              </p>
             {/if}
-          </p>
-        {/if}
-      </section>
+          </section>
+        </section>
+      {/if}
 
       {#if latestReveal}
         <section aria-labelledby="latest-reveal-heading" aria-live="polite" class="reveal-moment-panel">
@@ -430,7 +463,7 @@
   </section>
 
   {#if hasInventory}
-    <div class:secondary-panel={ritualIsRunning}>
+    <div class:secondary-panel={ritualIsRunning} class:secondary-controls-panel={ritualIsRunning}>
       <RitualSlotsPanel slots={ritualSlotItems} onSelectSlot={handleSelectRitualSlot} />
     </div>
   {/if}
@@ -509,6 +542,7 @@
   }
 
   .idle-status,
+  .running-cancel-panel,
   .primary-panel,
   .last-action-panel,
   .setup-panel,
@@ -520,6 +554,25 @@
     display: grid;
     gap: var(--surface-gap-sm);
     background: var(--color-background);
+  }
+
+  .running-cancel-panel,
+  .ritual-action-panel,
+  .secondary-controls-panel {
+    display: grid;
+    gap: var(--surface-gap-sm);
+  }
+
+  .running-cancel-panel :global(button) {
+    width: 100%;
+  }
+
+  .secondary-controls-panel h3,
+  .ritual-action-panel h3,
+  .reveal-panel h4,
+  .setup-panel h4 {
+    margin: 0;
+    line-height: 1.2;
   }
 
   .dev-tools-panel {

@@ -1,15 +1,15 @@
 <script lang="ts">
-export let mineralName: string;
-export let mineralDescription: string | null = null;
-export let mineralId: string;
+  export let mineralName: string;
+  export let mineralDescription: string | null = null;
+  export let mineralId: string;
   export let stageLabel: string;
   export let workedMinutes: number;
   export let nextThreshold: number | null;
-export let progressPercentage: number;
-export let progressAriaLabel: string;
-export let progressMessage: string;
-export let isCompleted: boolean;
-export let isRunning = false;
+  export let progressPercentage: number;
+  export let progressAriaLabel: string;
+  export let progressMessage: string;
+  export let isCompleted: boolean;
+  export let isRunning = false;
 </script>
 
 <section aria-labelledby="selected-mineral-heading" class:running={isRunning} class="mineral-hero">
@@ -26,15 +26,6 @@ export let isRunning = false;
       <p class="mineral-description">{mineralDescription}</p>
     {/if}
   </header>
-
-  {#if !isRunning}
-    <section aria-labelledby="mineral-visual-placeholder-heading" class="visual-placeholder">
-      <h3 id="mineral-visual-placeholder-heading">Mineral Visual Placeholder</h3>
-      <p>
-        Future update: ritual iconography, artwork, or 3D focus presentation will appear here.
-      </p>
-    </section>
-  {/if}
 
   <dl class="meta-grid">
     <div>
@@ -105,16 +96,6 @@ export let isRunning = false;
     width: fit-content;
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--color-muted-text);
-  }
-
-  .visual-placeholder {
-    border: 1px dashed var(--color-border);
-    border-radius: var(--surface-radius-sm);
-    padding: var(--surface-padding-sm);
-    display: grid;
-    gap: var(--space-1);
-    background: var(--color-surface);
     color: var(--color-muted-text);
   }
 

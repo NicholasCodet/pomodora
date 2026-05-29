@@ -22,6 +22,7 @@ export interface MaterialDefinition {
   name: string;
   displayName: string;
   shortDescription: string;
+  refinementProfile: string;
   artifactFamily: string;
   visualThemeHint: string;
   cost: Essence;

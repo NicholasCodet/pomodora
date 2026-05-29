@@ -119,6 +119,7 @@
             <header class="material-header">
               <h3>{material.name}</h3>
               <p class="material-description">{materialPresentationByType[material.type].shortDescription}</p>
+              <p class="material-profile">{materialPresentationByType[material.type].refinementProfile}</p>
             </header>
 
             <p class="material-state">

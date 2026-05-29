@@ -68,6 +68,7 @@ export interface MaterialPresentation {
   type: MaterialType;
   displayName: string;
   shortDescription: string;
+  refinementProfile: string;
   artifactFamily: string;
   visualThemeHint: string;
 }
@@ -78,6 +79,7 @@ export function getMaterialPresentation(materialType: MaterialType): MaterialPre
     type: material.type,
     displayName: material.displayName,
     shortDescription: material.shortDescription,
+    refinementProfile: material.refinementProfile,
     artifactFamily: material.artifactFamily,
     visualThemeHint: material.visualThemeHint,
   };

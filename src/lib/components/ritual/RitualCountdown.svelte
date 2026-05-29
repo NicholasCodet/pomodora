@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
 
   const TIMER_RING_RADIUS = 84;
@@ -9,7 +8,6 @@
   export let statusText: string;
   export let remainingMs: number;
   export let durationMinutes: number | null;
-  export let onCancel: () => void = () => {};
 
   $: durationMs = durationMinutes ? durationMinutes * 60 * 1000 : 0;
   $: progressRatio =
@@ -38,7 +36,6 @@
     <p class="timer-value">{remainingLabel}</p>
   </div>
   <p class="timer-status">{statusText}</p>
-  <Button variant="primary" on:click={onCancel}>Cancel current ritual</Button>
 </section>
 
 <style>
@@ -66,11 +63,6 @@
     background: var(--color-background);
     justify-items: center;
     text-align: center;
-  }
-
-  .timer-hero :global(button) {
-    width: 100%;
-    max-width: 16rem;
   }
 
   .timer-display {
@@ -121,9 +113,4 @@
     color: var(--color-muted-text);
   }
 
-  @media (min-width: 40rem) {
-    .timer-hero :global(button) {
-      width: auto;
-    }
-  }
 </style>
