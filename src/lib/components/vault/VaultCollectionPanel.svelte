@@ -7,6 +7,7 @@
     artifactId: string;
     name: string;
     description: string;
+    artifactCategory: string;
     rarity: ArtifactRarity;
     materialType: string;
     materialDisplayName: string;
@@ -134,6 +135,18 @@
                     >
                       <h5 id={`artifact-expanded-${buildArtifactKey(artifact)}`}>Expanded detail (selected)</h5>
                       <dl class="meta-grid expanded-meta">
+                        <div>
+                          <dt>Category</dt>
+                          <dd>{artifact.artifactCategory}</dd>
+                        </div>
+                        <div>
+                          <dt>Rarity</dt>
+                          <dd>{getRarityLabel(artifact.rarity)}</dd>
+                        </div>
+                        <div>
+                          <dt>Source Material</dt>
+                          <dd>{artifact.materialDisplayName}</dd>
+                        </div>
                         <div>
                           <dt>Discovered (exact)</dt>
                           <dd>{formatDiscoveredDateTime(artifact.discoveredAt)}</dd>
@@ -352,7 +365,7 @@
   }
 
   .expanded-meta {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (min-width: 40rem) {

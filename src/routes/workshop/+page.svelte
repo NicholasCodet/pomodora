@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
+  import MaterialPreviewCard from '$lib/components/materials/MaterialPreviewCard.svelte';
   import { getMaterialPresentation, getShopMaterialStates } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
@@ -116,11 +117,13 @@
       {#each shopMaterials as material}
         <li>
           <article class={`material-card ${getToneClass(material.type)}`}>
-            <header class="material-header">
-              <h3>{material.name}</h3>
-              <p class="material-description">{materialPresentationByType[material.type].shortDescription}</p>
-              <p class="material-profile">{materialPresentationByType[material.type].refinementProfile}</p>
-            </header>
+            <MaterialPreviewCard
+              displayName={materialPresentationByType[material.type].displayName}
+              shortDescription={materialPresentationByType[material.type].shortDescription}
+              artifactFamily={materialPresentationByType[material.type].artifactFamily}
+              visualThemeHint={materialPresentationByType[material.type].visualThemeHint}
+            />
+            <p class="material-profile">{materialPresentationByType[material.type].refinementProfile}</p>
 
             <p class="material-state">
               <span class={`state-badge ${getStatusClass(material)}`}>
@@ -196,8 +199,7 @@
   }
 
   h1,
-  h2,
-  h3 {
+  h2 {
     margin: 0;
     line-height: 1.2;
   }
@@ -259,14 +261,10 @@
     background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%);
   }
 
-  .material-header {
-    display: grid;
-    gap: 0.2rem;
-  }
-
-  .material-description {
+  .material-profile {
     color: var(--color-muted-text);
-    font-size: 0.92rem;
+    font-size: 0.88rem;
+    font-weight: 600;
   }
 
   .material-state {

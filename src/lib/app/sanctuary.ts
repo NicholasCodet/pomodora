@@ -146,6 +146,7 @@ export interface CollectionArtifactView {
   artifactId: string;
   name: string;
   description: string;
+  artifactCategory: string;
   rarity: Rarity | 'unknown';
   materialType: MaterialType | 'unknown';
   materialDisplayName: string;
@@ -167,6 +168,7 @@ export function getCollectionArtifactViews(state: GameState): CollectionArtifact
       artifactId: entry.artifactId,
       name: artifact?.name ?? entry.artifactId,
       description: artifact?.description ?? 'No description available yet.',
+      artifactCategory: artifact?.artifactCategory ?? 'Unknown',
       rarity: artifact?.rarity ?? 'unknown',
       materialType: artifact?.materialType ?? 'unknown',
       materialDisplayName: materialPresentation?.displayName ?? 'Unknown material',

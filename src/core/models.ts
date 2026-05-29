@@ -38,6 +38,7 @@ export interface ArtifactDefinition {
   id: ArtifactId;
   materialType: MaterialType;
   rarity: Rarity;
+  artifactCategory: string;
   name: string;
   description: string;
 }
