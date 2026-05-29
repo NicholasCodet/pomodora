@@ -9,13 +9,18 @@
     description: string;
     rarity: ArtifactRarity;
     materialType: string;
+    materialDisplayName: string;
+    artifactFamily: string;
+    visualThemeHint: string;
     sourceMineralId: string;
     discoveredAt: number;
   }
 
   interface VaultCollectionGroupView {
-    rarity: ArtifactRarity;
-    label: string;
+    key: string;
+    familyName: string;
+    materialName: string;
+    visualThemeHint: string;
     items: VaultCollectionArtifactView[];
   }
 
@@ -30,6 +35,22 @@
 
   function formatDiscoveredDateTime(timestamp: number): string {
     return new Date(timestamp).toLocaleString();
+  }
+
+  function getRarityLabel(rarity: ArtifactRarity): string {
+    if (rarity === 'epic') {
+      return 'Epic';
+    }
+
+    if (rarity === 'rare') {
+      return 'Rare';
+    }
+
+    if (rarity === 'common') {
+      return 'Common';
+    }
+
+    return 'Unknown';
   }
 
   function getRarityClass(rarity: ArtifactRarity): string {
@@ -71,10 +92,17 @@
   {:else}
     <div class="collection-groups">
       {#each groups as group}
-        <section aria-labelledby={`rarity-${group.rarity}`} class="rarity-group">
+        <section
+          aria-labelledby={`family-${group.key}`}
+          class="rarity-group"
+          data-family-theme={group.visualThemeHint}
+        >
           <header class="rarity-header">
-            <h3 id={`rarity-${group.rarity}`}>{group.label}</h3>
-            <p class="hint-text">{group.items.length} discovered</p>
+            <div class="group-title">
+              <h3 id={`family-${group.key}`}>{group.familyName}</h3>
+              <p class="hint-text">Source material: {group.materialName}</p>
+            </div>
+            <p class="hint-text">{group.items.length} artifacts</p>
           </header>
 
           <ul class="artifact-list">
@@ -85,13 +113,13 @@
                 >
                   <header class="card-header">
                     <h4>{artifact.name}</h4>
-                    <p class="status-chip rarity-label">{group.label}</p>
+                    <p class="status-chip rarity-label">{getRarityLabel(artifact.rarity)}</p>
                   </header>
 
                   <dl class="meta-grid">
                     <div>
                       <dt>Source Material</dt>
-                      <dd>{artifact.materialType}</dd>
+                      <dd>{artifact.materialDisplayName}</dd>
                     </div>
                     <div>
                       <dt>Discovered</dt>
@@ -205,8 +233,13 @@
   .rarity-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     gap: var(--space-2);
+  }
+
+  .group-title {
+    display: grid;
+    gap: 0.2rem;
   }
 
   .artifact-list {

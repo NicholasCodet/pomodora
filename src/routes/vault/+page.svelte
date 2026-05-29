@@ -12,11 +12,11 @@
   import VaultViewSwitch from '$lib/components/vault/VaultViewSwitch.svelte';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
-  type ArtifactRarity = CollectionArtifactView['rarity'];
-
   interface CollectionGroup {
-    rarity: ArtifactRarity;
-    label: string;
+    key: string;
+    familyName: string;
+    materialName: string;
+    visualThemeHint: string;
     items: CollectionArtifactView[];
   }
 
@@ -70,31 +70,27 @@
   }
 
   function buildCollectionGroups(artifacts: CollectionArtifactView[]): CollectionGroup[] {
-    const orderedRarities: ArtifactRarity[] = ['epic', 'rare', 'common', 'unknown'];
+    const groups = new Map<string, CollectionGroup>();
 
-    return orderedRarities
-      .map((rarity) => ({
-        rarity,
-        label: getRarityLabel(rarity),
-        items: artifacts.filter((artifact) => artifact.rarity === rarity),
-      }))
-      .filter((group) => group.items.length > 0);
-  }
+    for (const artifact of artifacts) {
+      const key = `${artifact.artifactFamily}:${artifact.materialDisplayName}`;
+      const existing = groups.get(key);
 
-  function getRarityLabel(rarity: ArtifactRarity): string {
-    if (rarity === 'epic') {
-      return 'Epic';
+      if (existing) {
+        existing.items.push(artifact);
+        continue;
+      }
+
+      groups.set(key, {
+        key,
+        familyName: artifact.artifactFamily,
+        materialName: artifact.materialDisplayName,
+        visualThemeHint: artifact.visualThemeHint,
+        items: [artifact],
+      });
     }
 
-    if (rarity === 'rare') {
-      return 'Rare';
-    }
-
-    if (rarity === 'common') {
-      return 'Common';
-    }
-
-    return 'Unknown';
+    return [...groups.values()];
   }
 
   function getRemainingStageLabel(progress: ReturnType<typeof getMineralProgressView>): string {

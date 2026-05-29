@@ -146,6 +146,9 @@ export interface CollectionArtifactView {
   description: string;
   rarity: Rarity | 'unknown';
   materialType: MaterialType | 'unknown';
+  materialDisplayName: string;
+  artifactFamily: string;
+  visualThemeHint: string;
   sourceMineralId: string;
   discoveredAt: number;
 }
@@ -153,6 +156,10 @@ export interface CollectionArtifactView {
 export function getCollectionArtifactViews(state: GameState): CollectionArtifactView[] {
   return state.collection.map((entry) => {
     const artifact = ARTIFACTS.find((definition) => definition.id === entry.artifactId);
+    const materialPresentation =
+      artifact && artifact.materialType in MATERIAL_DEFINITIONS
+        ? getMaterialPresentation(artifact.materialType)
+        : null;
 
     return {
       artifactId: entry.artifactId,
@@ -160,6 +167,9 @@ export function getCollectionArtifactViews(state: GameState): CollectionArtifact
       description: artifact?.description ?? 'No description available yet.',
       rarity: artifact?.rarity ?? 'unknown',
       materialType: artifact?.materialType ?? 'unknown',
+      materialDisplayName: materialPresentation?.displayName ?? 'Unknown material',
+      artifactFamily: materialPresentation?.artifactFamily ?? 'Unknown family',
+      visualThemeHint: materialPresentation?.visualThemeHint ?? 'unknown',
       sourceMineralId: entry.sourceMineralId,
       discoveredAt: entry.discoveredAt,
     };
