@@ -20,6 +20,10 @@ export type Minutes = number;
 export interface MaterialDefinition {
   type: MaterialType;
   name: string;
+  displayName: string;
+  shortDescription: string;
+  artifactFamily: string;
+  visualThemeHint: string;
   cost: Essence;
   stageCount: number;
   stageThresholds: readonly Minutes[];

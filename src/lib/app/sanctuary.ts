@@ -64,6 +64,25 @@ export function getMaterialStageThresholds(materialType: MaterialType): readonly
   return MATERIAL_DEFINITIONS[materialType].stageThresholds;
 }
 
+export interface MaterialPresentation {
+  type: MaterialType;
+  displayName: string;
+  shortDescription: string;
+  artifactFamily: string;
+  visualThemeHint: string;
+}
+
+export function getMaterialPresentation(materialType: MaterialType): MaterialPresentation {
+  const material = MATERIAL_DEFINITIONS[materialType];
+  return {
+    type: material.type,
+    displayName: material.displayName,
+    shortDescription: material.shortDescription,
+    artifactFamily: material.artifactFamily,
+    visualThemeHint: material.visualThemeHint,
+  };
+}
+
 export function buyAndSelectMineral(
   state: GameState,
   materialType: MaterialType,

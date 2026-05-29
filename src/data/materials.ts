@@ -4,6 +4,10 @@ export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialType, MaterialDefinit
   clay: {
     type: 'clay',
     name: 'Clay',
+    displayName: 'Clay',
+    shortDescription: 'Humble earth used to begin focus refinement.',
+    artifactFamily: 'Earthen Relics',
+    visualThemeHint: 'matte_earth',
     cost: 1,
     stageCount: 3,
     stageThresholds: [30, 60, 90],
@@ -13,6 +17,10 @@ export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialType, MaterialDefinit
   limestone: {
     type: 'limestone',
     name: 'Limestone',
+    displayName: 'Limestone',
+    shortDescription: 'Carved stone suited for deliberate ritual practice.',
+    artifactFamily: 'Temple Fragments',
+    visualThemeHint: 'weathered_stone',
     cost: 10,
     stageCount: 4,
     stageThresholds: [45, 90, 135, 180],
@@ -26,6 +34,10 @@ export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialType, MaterialDefinit
   marble: {
     type: 'marble',
     name: 'Marble',
+    displayName: 'Marble',
+    shortDescription: 'Pristine stone reserved for advanced refinement.',
+    artifactFamily: 'Sanctum Monuments',
+    visualThemeHint: 'polished_marble',
     cost: 40,
     stageCount: 5,
     stageThresholds: [60, 120, 180, 240, 300],

@@ -9,6 +9,7 @@
   import RitualSlotsPanel from '$lib/components/ritual/RitualSlotsPanel.svelte';
   import {
     getRitualSlotMinerals,
+    getMaterialPresentation,
     getMineralProgressView,
     getMaterialStageThresholds,
     getSelectedMineral,
@@ -74,8 +75,11 @@
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
   $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
   $: selectedMineralName = selectedProgress?.ok
-    ? getMaterialLabel(selectedProgress.view.materialType)
+    ? getMaterialPresentation(selectedProgress.view.materialType).displayName
     : '';
+  $: selectedMineralDescription = selectedProgress?.ok
+    ? getMaterialPresentation(selectedProgress.view.materialType).shortDescription
+    : null;
   $: selectedStageThresholds =
     selectedProgress?.ok ? getMaterialStageThresholds(selectedProgress.view.materialType) : null;
   $: stageProgress = buildStageProgress(selectedProgress, selectedStageThresholds);
@@ -326,6 +330,7 @@
     {:else if selectedProgress?.ok && stageProgress}
       <RitualMineralHero
         mineralName={selectedMineralName}
+        mineralDescription={selectedMineralDescription}
         mineralId={selectedMineral.id}
         stageLabel={stageProgress.stageLabel}
         workedMinutes={selectedProgress.view.workedMinutes}
@@ -334,6 +339,7 @@
         progressAriaLabel={stageProgress.rangeLabel}
         progressMessage={stageProgress.remainingLabel}
         isCompleted={selectedProgress.view.isCompleted}
+        isRunning={ritualIsRunning}
       />
 
       {#if ritualIsRunning}

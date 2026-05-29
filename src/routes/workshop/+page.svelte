@@ -1,12 +1,15 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import Icon from '$lib/components/Icon.svelte';
-  import { getShopMaterialStates } from '$lib/app/sanctuary';
+  import { getMaterialPresentation, getShopMaterialStates } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
 
   let lastActionMessage = '';
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
+  $: materialPresentationByType = Object.fromEntries(
+    shopMaterials.map((material) => [material.type, getMaterialPresentation(material.type)]),
+  );
   $: currentEssence = $sanctuaryStore.player.essence;
   $: inventory = $sanctuaryStore.inventory;
   $: isFirstRun = inventory.length === 0;
@@ -115,6 +118,7 @@
           <article class={`material-card ${getToneClass(material.type)}`}>
             <header class="material-header">
               <h3>{material.name}</h3>
+              <p class="material-description">{materialPresentationByType[material.type].shortDescription}</p>
             </header>
 
             <p class="material-state">
@@ -257,6 +261,11 @@
   .material-header {
     display: grid;
     gap: 0.2rem;
+  }
+
+  .material-description {
+    color: var(--color-muted-text);
+    font-size: 0.92rem;
   }
 
   .material-state {
