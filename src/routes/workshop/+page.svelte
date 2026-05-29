@@ -4,13 +4,29 @@
   import MaterialPreviewCard from '$lib/components/materials/MaterialPreviewCard.svelte';
   import { getMaterialPresentation, getShopMaterialStates } from '$lib/app/sanctuary';
   import { sanctuaryStore } from '$lib/stores/sanctuaryStore';
+  import type { MaterialType } from '../../core/models';
 
   let lastActionMessage = '';
+  let selectedMaterialType: MaterialType | null = null;
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
   $: materialPresentationByType = Object.fromEntries(
     shopMaterials.map((material) => [material.type, getMaterialPresentation(material.type)]),
   );
+  $: if (selectedMaterialType === null && shopMaterials.length > 0) {
+    selectedMaterialType = shopMaterials[0].type;
+  }
+  $: if (
+    selectedMaterialType !== null &&
+    !shopMaterials.some((material) => material.type === selectedMaterialType)
+  ) {
+    selectedMaterialType = shopMaterials[0]?.type ?? null;
+  }
+  $: selectedMaterial =
+    selectedMaterialType === null
+      ? null
+      : (shopMaterials.find((material) => material.type === selectedMaterialType) ?? null);
+  $: otherMaterials = shopMaterials.filter((material) => material.type !== selectedMaterialType);
   $: currentEssence = $sanctuaryStore.player.essence;
   $: inventory = $sanctuaryStore.inventory;
   $: isFirstRun = inventory.length === 0;
@@ -88,6 +104,10 @@
       : `Buy failed: ${formatFailureReason(result.reason)}.`;
   }
 
+  function handleSelectMaterial(materialType: MaterialType): void {
+    selectedMaterialType = materialType;
+  }
+
   function formatFailureReason(reason: string): string {
     return reason.replaceAll('_', ' ');
   }
@@ -110,71 +130,112 @@
     </section>
   {/if}
 
-  <section aria-labelledby="materials-heading" class="materials-panel">
-    <h2 id="materials-heading">Ritual Materials</h2>
+  <section aria-labelledby="selected-material-heading" class="materials-panel">
+    <h2 id="selected-material-heading">Selected Material</h2>
+    {#if selectedMaterial}
+      <p class="selection-state-text">
+        Currently selected: <strong>{materialPresentationByType[selectedMaterial.type].displayName}</strong>
+      </p>
+      <article class={`material-card selected-material-card ${getToneClass(selectedMaterial.type)}`}>
+        <MaterialPreviewCard
+          displayName={materialPresentationByType[selectedMaterial.type].displayName}
+          shortDescription={materialPresentationByType[selectedMaterial.type].shortDescription}
+          artifactFamily={materialPresentationByType[selectedMaterial.type].artifactFamily}
+          visualThemeHint={materialPresentationByType[selectedMaterial.type].visualThemeHint}
+        />
+        <p class="material-profile">{materialPresentationByType[selectedMaterial.type].refinementProfile}</p>
 
-    <ul class="material-list">
-      {#each shopMaterials as material}
-        <li>
-          <article class={`material-card ${getToneClass(material.type)}`}>
-            <MaterialPreviewCard
-              displayName={materialPresentationByType[material.type].displayName}
-              shortDescription={materialPresentationByType[material.type].shortDescription}
-              artifactFamily={materialPresentationByType[material.type].artifactFamily}
-              visualThemeHint={materialPresentationByType[material.type].visualThemeHint}
-            />
-            <p class="material-profile">{materialPresentationByType[material.type].refinementProfile}</p>
+        <section aria-labelledby="acquisition-heading" class="acquisition-panel">
+          <h3 id="acquisition-heading">Acquisition</h3>
+          <p class="material-state">
+            <span class={`state-badge ${getStatusClass(selectedMaterial)}`}>
+              {#if selectedMaterial.canPurchase}
+                <span class="badge-with-icon"><Icon name="check" size={13} />{getShopStateLabel(selectedMaterial)}</span>
+              {:else if selectedMaterial.blockedReason === 'insufficient_essence'}
+                <span class="badge-with-icon"><Icon name="essence" size={13} />{getShopStateLabel(selectedMaterial)}</span>
+              {:else if selectedMaterial.blockedReason === 'material_locked'}
+                <span class="badge-with-icon"><Icon name="lock" size={13} />{getShopStateLabel(selectedMaterial)}</span>
+              {:else}
+                {getShopStateLabel(selectedMaterial)}
+              {/if}
+            </span>
+            <span class="state-hint">{getShopStateHint(selectedMaterial)}</span>
+          </p>
 
-            <p class="material-state">
-              <span class={`state-badge ${getStatusClass(material)}`}>
-                {#if material.canPurchase}
-                  <span class="badge-with-icon"><Icon name="check" size={13} />{getShopStateLabel(material)}</span>
-                {:else if material.blockedReason === 'insufficient_essence'}
-                  <span class="badge-with-icon"><Icon name="essence" size={13} />{getShopStateLabel(material)}</span>
-                {:else if material.blockedReason === 'material_locked'}
-                  <span class="badge-with-icon"><Icon name="lock" size={13} />{getShopStateLabel(material)}</span>
-                {:else}
-                  {getShopStateLabel(material)}
-                {/if}
-              </span>
-              <span class="state-hint">{getShopStateHint(material)}</span>
-            </p>
-
-            <dl class="material-meta">
-              <div>
-                <dt>Cost</dt>
-                <dd class="cost-value">
-                  <span class="badge-with-icon"><Icon name="essence" size={13} />{material.cost} Essence</span>
-                </dd>
-              </div>
-              <div>
-                <dt>Ownership</dt>
-                <dd>{getOwnedCountLabel(material.type)}</dd>
-              </div>
-            </dl>
-
-            <div class="action-row">
-              <Button
-                variant={material.canPurchase ? 'primary' : 'secondary'}
-                disabled={!material.canPurchase}
-                on:click={() => handleBuyMaterial(material.type)}
-              >
-                Buy {material.name}
-              </Button>
-              <p class="action-hint">
-                {#if material.blockedReason === 'material_locked'}
-                  Unlock required before purchase.
-                {:else if material.blockedReason === 'insufficient_essence'}
-                  Earn more Essence through rituals.
-                {:else}
-                  Buying immediately sets this as your active mineral.
-                {/if}
-              </p>
+          <dl class="material-meta">
+            <div>
+              <dt>Cost</dt>
+              <dd class="cost-value">
+                <span class="badge-with-icon"><Icon name="essence" size={13} />{selectedMaterial.cost} Essence</span>
+              </dd>
             </div>
-          </article>
-        </li>
-      {/each}
-    </ul>
+            <div>
+              <dt>Ownership</dt>
+              <dd>{getOwnedCountLabel(selectedMaterial.type)}</dd>
+            </div>
+          </dl>
+
+          <div class="action-row">
+            <Button
+              variant={selectedMaterial.canPurchase ? 'primary' : 'secondary'}
+              disabled={!selectedMaterial.canPurchase}
+              on:click={() => handleBuyMaterial(selectedMaterial.type)}
+            >
+              Buy {selectedMaterial.name}
+            </Button>
+            <p class="action-hint">
+              {#if selectedMaterial.blockedReason === 'material_locked'}
+                Unlock required before purchase.
+              {:else if selectedMaterial.blockedReason === 'insufficient_essence'}
+                Earn more Essence through rituals.
+              {:else}
+                Buying immediately sets this as your active mineral.
+              {/if}
+            </p>
+          </div>
+        </section>
+      </article>
+    {:else}
+      <p>No material available for selection.</p>
+    {/if}
+  </section>
+
+  <section aria-labelledby="other-materials-heading" class="materials-panel">
+    <h2 id="other-materials-heading">Other Materials</h2>
+    {#if otherMaterials.length === 0}
+      <p>All available materials are currently focused above.</p>
+    {:else}
+      <ul class="material-list other-material-list">
+        {#each otherMaterials as material}
+          <li>
+            <article class={`material-card material-option-card ${getToneClass(material.type)}`}>
+              <header class="option-header">
+                <h3>{materialPresentationByType[material.type].displayName}</h3>
+                <p class="state-hint">{materialPresentationByType[material.type].shortDescription}</p>
+              </header>
+
+              <p class="material-state">
+                <span class={`state-badge ${getStatusClass(material)}`}>
+                  {#if material.canPurchase}
+                    <span class="badge-with-icon"><Icon name="check" size={13} />{getShopStateLabel(material)}</span>
+                  {:else if material.blockedReason === 'insufficient_essence'}
+                    <span class="badge-with-icon"><Icon name="essence" size={13} />{getShopStateLabel(material)}</span>
+                  {:else if material.blockedReason === 'material_locked'}
+                    <span class="badge-with-icon"><Icon name="lock" size={13} />{getShopStateLabel(material)}</span>
+                  {:else}
+                    {getShopStateLabel(material)}
+                  {/if}
+                </span>
+              </p>
+
+              <Button variant="secondary" on:click={() => handleSelectMaterial(material.type)}>
+                Select {materialPresentationByType[material.type].displayName}
+              </Button>
+            </article>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   </section>
 
   {#if lastActionMessage}
@@ -243,6 +304,32 @@
     background: var(--color-surface);
     padding: var(--surface-padding-sm);
     display: grid;
+    gap: var(--surface-gap-sm);
+  }
+
+  .selection-state-text {
+    color: var(--color-muted-text);
+  }
+
+  .selected-material-card {
+    gap: var(--surface-gap-md);
+  }
+
+  .acquisition-panel {
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
+    padding: var(--surface-padding-sm);
+    background: var(--color-background);
+    display: grid;
+    gap: var(--surface-gap-sm);
+  }
+
+  .option-header {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .material-option-card {
     gap: var(--surface-gap-sm);
   }
 
