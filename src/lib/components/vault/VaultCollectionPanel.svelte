@@ -6,6 +6,7 @@
   interface VaultCollectionArtifactView {
     artifactId: string;
     name: string;
+    description: string;
     rarity: ArtifactRarity;
     materialType: string;
     sourceMineralId: string;
@@ -110,6 +111,14 @@
                           <dd>{formatDiscoveredDateTime(artifact.discoveredAt)}</dd>
                         </div>
                       </dl>
+
+                      <section
+                        aria-labelledby={`artifact-description-${buildArtifactKey(artifact)}`}
+                        class="artifact-description"
+                      >
+                        <h6 id={`artifact-description-${buildArtifactKey(artifact)}`}>Description</h6>
+                        <p>{artifact.description}</p>
+                      </section>
 
                       <section
                         aria-labelledby={`artifact-visual-placeholder-${buildArtifactKey(artifact)}`}
@@ -266,6 +275,11 @@
     border-radius: var(--surface-radius-sm);
     padding: var(--surface-padding-sm);
     background: var(--color-background);
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .artifact-description {
     display: grid;
     gap: var(--space-1);
   }

@@ -5,6 +5,7 @@
   import Button from '$lib/components/Button.svelte';
   import RitualCountdown from '$lib/components/ritual/RitualCountdown.svelte';
   import RitualDurationPicker from '$lib/components/ritual/RitualDurationPicker.svelte';
+  import RitualMineralHero from '$lib/components/ritual/RitualMineralHero.svelte';
   import RitualSlotsPanel from '$lib/components/ritual/RitualSlotsPanel.svelte';
   import {
     getRitualSlotMinerals,
@@ -72,6 +73,9 @@
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: selectedProgress = selectedMineral ? getMineralProgressView(selectedMineral) : null;
   $: isSelectedCompleted = selectedProgress?.ok ? selectedProgress.view.isCompleted : false;
+  $: selectedMineralName = selectedProgress?.ok
+    ? getMaterialLabel(selectedProgress.view.materialType)
+    : '';
   $: selectedStageThresholds =
     selectedProgress?.ok ? getMaterialStageThresholds(selectedProgress.view.materialType) : null;
   $: stageProgress = buildStageProgress(selectedProgress, selectedStageThresholds);
@@ -168,22 +172,6 @@
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
-  }
-
-  function getNextProgressLabel(): string {
-    if (!selectedProgress?.ok) {
-      return 'Progress unavailable';
-    }
-
-    if (selectedProgress.view.isCompleted) {
-      return 'Fully refined';
-    }
-
-    if (selectedProgress.view.remainingMinutesToNextStage === null) {
-      return 'Next stage unknown';
-    }
-
-    return `${selectedProgress.view.remainingMinutesToNextStage} min to next stage`;
   }
 
   function buildStageProgress(
@@ -325,9 +313,7 @@
     </section>
   {/if}
 
-  <section aria-labelledby="selected-mineral-heading" class="primary-panel">
-    <h2 id="selected-mineral-heading">Selected Mineral</h2>
-
+  <section class="primary-panel">
     {#if selectedMineral === null}
       {#if hasInventory}
         <p>No active mineral is currently available for ritual.</p>
@@ -337,66 +323,18 @@
         <p class="hint-text">Once purchased, it becomes your active ritual target automatically.</p>
         <p><a class="empty-state-link" href="/workshop">Go to Workshop</a></p>
       {/if}
-    {:else if selectedProgress?.ok}
-      <p class="mineral-title">
-        <strong>{getMaterialLabel(selectedProgress.view.materialType)}</strong>
-        <span class="hint-text">({selectedMineral.id})</span>
-      </p>
-
-      {#if ritualIsRunning}
-        <dl class="summary-grid">
-          <div>
-            <dt>Stage</dt>
-            <dd>{selectedProgress.view.currentStage} / {selectedProgress.view.stageCount}</dd>
-          </div>
-          <div>
-            <dt>Worked Minutes</dt>
-            <dd>{selectedProgress.view.workedMinutes}</dd>
-          </div>
-          <div>
-            <dt>Next Threshold</dt>
-            <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
-          </div>
-          <div>
-            <dt>Remaining Minutes</dt>
-            <dd>{selectedProgress.view.remainingMinutesToNextStage ?? 'none'}</dd>
-          </div>
-          <div>
-            <dt>Completed</dt>
-            <dd>{selectedProgress.view.isCompleted ? 'Yes' : 'No'}</dd>
-          </div>
-        </dl>
-      {:else}
-        <section aria-labelledby="idle-progress-heading" class="idle-progress">
-          <h3 id="idle-progress-heading">Progress</h3>
-          <p class="hint-text">{getNextProgressLabel()}</p>
-          <dl class="progress-inline">
-            <div>
-              <dt>Worked</dt>
-              <dd>{selectedProgress.view.workedMinutes} min</dd>
-            </div>
-            <div>
-              <dt>Next Threshold</dt>
-              <dd>{selectedProgress.view.nextThreshold ?? 'none'}</dd>
-            </div>
-          </dl>
-        </section>
-      {/if}
-
-      {#if stageProgress}
-        <section aria-labelledby="stage-progress-heading" class="stage-progress-panel">
-          <h3 id="stage-progress-heading">Refinement Progress</h3>
-          <p class="progress-stage">{stageProgress.stageLabel}</p>
-          <progress
-            class="stage-progress-bar"
-            value={stageProgress.percentage}
-            max="100"
-            aria-label={stageProgress.rangeLabel}
-          ></progress>
-          <p class="stage-progress-percent">{stageProgress.percentage}%</p>
-          <p class="hint-text">{stageProgress.remainingLabel}</p>
-        </section>
-      {/if}
+    {:else if selectedProgress?.ok && stageProgress}
+      <RitualMineralHero
+        mineralName={selectedMineralName}
+        mineralId={selectedMineral.id}
+        stageLabel={stageProgress.stageLabel}
+        workedMinutes={selectedProgress.view.workedMinutes}
+        nextThreshold={selectedProgress.view.nextThreshold}
+        progressPercentage={stageProgress.percentage}
+        progressAriaLabel={stageProgress.rangeLabel}
+        progressMessage={stageProgress.remainingLabel}
+        isCompleted={selectedProgress.view.isCompleted}
+      />
 
       {#if ritualIsRunning}
         <section aria-labelledby="ritual-setup-heading" class="setup-panel secondary-panel">
@@ -478,8 +416,10 @@
           </div>
         </details>
       {/if}
+    {:else if selectedProgress && !selectedProgress.ok}
+      <p>Unable to compute selected mineral progress: {selectedProgress.reason}</p>
     {:else}
-      <p>Unable to compute selected mineral progress: {selectedProgress?.reason}</p>
+      <p>Unable to compute selected mineral progress.</p>
     {/if}
   </section>
 
@@ -567,63 +507,13 @@
   .last-action-panel,
   .setup-panel,
   .reveal-panel,
-  .stage-progress-panel,
-  .reveal-moment-panel,
-  .idle-progress,
-  .summary-grid div {
+  .reveal-moment-panel {
     border: var(--surface-border);
     border-radius: var(--surface-radius-sm);
     padding: var(--surface-padding-sm);
     display: grid;
     gap: var(--surface-gap-sm);
     background: var(--color-background);
-  }
-
-  .mineral-title {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
-    align-items: baseline;
-  }
-
-  .summary-grid {
-    display: grid;
-    gap: var(--surface-gap-sm);
-    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  }
-
-  .progress-stage {
-    font-size: 1rem;
-    font-weight: 700;
-  }
-
-  .stage-progress-bar {
-    width: 100%;
-    height: 0.75rem;
-  }
-
-  .stage-progress-percent {
-    font-size: 0.9rem;
-    font-weight: 700;
-  }
-
-  .progress-inline {
-    margin: 0;
-    display: grid;
-    gap: var(--space-1);
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  dt {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--color-muted-text);
-  }
-
-  dd {
-    margin: 0.25rem 0 0;
-    font-size: 1rem;
-    font-weight: 600;
   }
 
   .dev-tools-panel {
@@ -762,10 +652,6 @@
   }
 
   @media (min-width: 40rem) {
-    .summary-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .reveal-meta {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }

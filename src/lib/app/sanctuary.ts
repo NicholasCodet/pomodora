@@ -124,6 +124,7 @@ export function getRitualSlotMinerals(state: GameState): OwnedMineral[] {
 export interface CollectionArtifactView {
   artifactId: string;
   name: string;
+  description: string;
   rarity: Rarity | 'unknown';
   materialType: MaterialType | 'unknown';
   sourceMineralId: string;
@@ -137,6 +138,7 @@ export function getCollectionArtifactViews(state: GameState): CollectionArtifact
     return {
       artifactId: entry.artifactId,
       name: artifact?.name ?? entry.artifactId,
+      description: artifact?.description ?? 'No description available yet.',
       rarity: artifact?.rarity ?? 'unknown',
       materialType: artifact?.materialType ?? 'unknown',
       sourceMineralId: entry.sourceMineralId,
