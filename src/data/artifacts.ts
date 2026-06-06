@@ -5,9 +5,9 @@ export const ARTIFACTS: readonly ArtifactDefinition[] = [
     id: 'clay-common-urn',
     materialType: 'clay',
     rarity: 'common',
-    artifactCategory: 'Fragment',
-    name: 'Urn Fragment',
-    description: 'A humble shard carrying traces of old rituals.',
+    artifactCategory: 'Vessel',
+    name: 'Clay Ritual Urn',
+    description: 'A small clay urn shaped for quiet focus rituals.',
   },
   
   {

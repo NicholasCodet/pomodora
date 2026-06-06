@@ -110,6 +110,7 @@ src/
 ### Asset Strategy
 - Functional UI icons use `static/icons/sprite.svg`.
 - Material and artifact media are presentation assets, not gameplay definitions.
+- Asset generation prompts, export rules, and naming rules are documented in `ASSETS.md`.
 - Material visual assets live in `src/lib/assets/materials/`.
 - Artifact visual assets live in `src/lib/assets/artifacts/`.
 - Asset registries live in `src/lib/assets/materialAssets.ts` and `src/lib/assets/artifactAssets.ts`.
