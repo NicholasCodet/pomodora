@@ -6,6 +6,10 @@
   function getStatusLabel(status: PageData['assets'][number]['status']): string {
     return status === 'active' ? 'Active gameplay' : 'Future asset';
   }
+
+  function formatLabel(value: string): string {
+    return value.replaceAll('-', ' ');
+  }
 </script>
 
 <svelte:head>
@@ -39,9 +43,31 @@
         <div class="asset-content">
           <div class="asset-title-row">
             <h2>{asset.label}</h2>
-            <span class="status-badge">{getStatusLabel(asset.status)}</span>
+            <div class="badge-group" aria-label={`${asset.label} asset status`}>
+              <span class="status-badge">{getStatusLabel(asset.status)}</span>
+              <span class={`qa-badge qa-${asset.qaStatus}`}>{formatLabel(asset.qaStatus)}</span>
+            </div>
           </div>
-          <p class="asset-id">Asset id: <code>{asset.id}</code></p>
+
+          <dl class="asset-meta">
+            <div>
+              <dt>Role</dt>
+              <dd>{formatLabel(asset.role)}</dd>
+            </div>
+            <div>
+              <dt>File</dt>
+              <dd><code>{asset.fileName}</code></dd>
+            </div>
+            <div>
+              <dt>Format</dt>
+              <dd>{asset.format.toUpperCase()}</dd>
+            </div>
+            <div>
+              <dt>Asset ID</dt>
+              <dd><code>{asset.id}</code></dd>
+            </div>
+          </dl>
+
           {#if asset.note}
             <p class="asset-note">{asset.note}</p>
           {/if}
@@ -90,7 +116,6 @@
 
   .section-intro,
   .asset-note,
-  .asset-id,
   .asset-summary {
     color: var(--color-muted-text);
     line-height: 1.5;
@@ -147,14 +172,20 @@
   }
 
   .asset-title-row {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .badge-group {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-1);
-    align-items: center;
-    justify-content: space-between;
   }
 
-  .status-badge {
+  .status-badge,
+  .qa-badge {
+    display: inline-flex;
+    width: fit-content;
     border-radius: var(--chip-radius);
     background: var(--color-secondary);
     color: var(--color-text);
@@ -168,8 +199,59 @@
     color: #ffffff;
   }
 
+  .qa-ready {
+    border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+    background: #ecfdf5;
+    color: #065f46;
+  }
+
+  .qa-review {
+    border: 1px solid #fbbf24;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .qa-placeholder {
+    border: 1px dashed var(--color-border);
+    background: var(--color-background);
+    color: var(--color-muted-text);
+  }
+
+  .asset-meta {
+    margin: 0;
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .asset-meta div {
+    min-width: 0;
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
+    background: var(--color-background);
+    padding: var(--space-1);
+  }
+
+  dt {
+    color: var(--color-muted-text);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0.2rem 0 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    text-transform: capitalize;
+  }
+
   code {
     font-family: 'SFMono-Regular', Consolas, monospace;
     font-size: 0.85em;
+    text-transform: none;
   }
 </style>

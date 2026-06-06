@@ -13,12 +13,19 @@ import talcVisual from './materials/talc.png';
 import topazeVisual from './materials/topaze.png';
 
 export type MaterialAssetPreviewStatus = 'active' | 'future';
+export type MaterialAssetPreviewRole = 'playable' | 'future-candidate';
+export type MaterialAssetQaStatus = 'ready' | 'review' | 'placeholder';
+export type MaterialAssetFormat = 'avif' | 'png' | 'webp';
 
 export interface MaterialAssetPreviewEntry {
   id: string;
   label: string;
   image: string;
   status: MaterialAssetPreviewStatus;
+  fileName: string;
+  format: MaterialAssetFormat;
+  role: MaterialAssetPreviewRole;
+  qaStatus: MaterialAssetQaStatus;
   note?: string;
 }
 
@@ -31,6 +38,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Clay',
     image: getMaterialAsset('clay').illustration ?? getMaterialAsset('clay').thumbnail ?? '',
     status: 'active',
+    fileName: 'clay.avif',
+    format: 'avif',
+    role: 'playable',
+    qaStatus: 'ready',
     note: ACTIVE_ASSET_NOTE,
   },
   {
@@ -38,6 +49,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Limestone',
     image: getMaterialAsset('limestone').illustration ?? getMaterialAsset('limestone').thumbnail ?? '',
     status: 'active',
+    fileName: 'limestone.avif',
+    format: 'avif',
+    role: 'playable',
+    qaStatus: 'ready',
     note: ACTIVE_ASSET_NOTE,
   },
   {
@@ -45,6 +60,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Marble',
     image: getMaterialAsset('marble').illustration ?? getMaterialAsset('marble').thumbnail ?? '',
     status: 'active',
+    fileName: 'marble.avif',
+    format: 'avif',
+    role: 'playable',
+    qaStatus: 'ready',
     note: ACTIVE_ASSET_NOTE,
   },
   {
@@ -52,6 +71,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Apatite',
     image: apatiteVisual,
     status: 'future',
+    fileName: 'apatite.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -59,6 +82,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Calcite',
     image: calciteVisual,
     status: 'future',
+    fileName: 'calcite.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -66,6 +93,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Corundum',
     image: corundumVisual,
     status: 'future',
+    fileName: 'corundum.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -73,6 +104,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Diamond',
     image: diamondVisual,
     status: 'future',
+    fileName: 'diamond.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -80,6 +115,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Fluorite',
     image: fluoriteVisual,
     status: 'future',
+    fileName: 'fluorite.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -87,6 +126,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Geode',
     image: geodeVisual,
     status: 'future',
+    fileName: 'geode.avif',
+    format: 'avif',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: 'Uses geode.avif for preview; geode.png remains an unused alternate export.',
   },
   {
@@ -94,6 +137,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Gypse',
     image: gypseVisual,
     status: 'future',
+    fileName: 'gypse.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -101,6 +148,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Orthoclase',
     image: orthoclaseVisual,
     status: 'future',
+    fileName: 'orthoclase.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -108,6 +159,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Quartz',
     image: quartzVisual,
     status: 'future',
+    fileName: 'quartz.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -115,6 +170,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Sunstone',
     image: sunstoneVisual,
     status: 'future',
+    fileName: 'sunstone.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -122,6 +181,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Talc',
     image: talcVisual,
     status: 'future',
+    fileName: 'talc.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
   {
@@ -129,6 +192,10 @@ export const MATERIAL_ASSET_PREVIEW_ENTRIES: readonly MaterialAssetPreviewEntry[
     label: 'Topaze',
     image: topazeVisual,
     status: 'future',
+    fileName: 'topaze.png',
+    format: 'png',
+    role: 'future-candidate',
+    qaStatus: 'review',
     note: FUTURE_ASSET_NOTE,
   },
 ];
