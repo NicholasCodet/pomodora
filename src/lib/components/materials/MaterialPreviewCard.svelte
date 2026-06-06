@@ -72,7 +72,7 @@
   }
 
   .preview-media-surface {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 5 / 4;
     box-sizing: border-box;
     border: 1px dashed var(--color-border);
     border-radius: var(--surface-radius-sm);
@@ -87,7 +87,7 @@
 
   .preview-media-surface.has-media {
     border-style: solid;
-    padding: clamp(var(--space-2), 8%, var(--space-4));
+    padding: clamp(var(--space-2), 7%, var(--space-3));
     text-align: initial;
   }
 
@@ -95,8 +95,8 @@
     display: block;
     width: auto;
     height: auto;
-    max-width: 88%;
-    max-height: 88%;
+    max-width: 86%;
+    max-height: 86%;
     border-radius: var(--surface-radius-sm);
     object-fit: contain;
   }

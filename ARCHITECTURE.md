@@ -37,12 +37,22 @@ src/
       sanctuaryStore.ts
     design/
       tokens.css
+    assets/
+      materialAssets.ts
+      artifactAssets.ts
+      materials/
+      artifacts/
+      icons/
     components/
       Button.svelte
       Icon.svelte
+      materials/
+        MaterialPreviewCard.svelte
       ritual/
+        MineralMediaPanel.svelte
         RitualCountdown.svelte
         RitualDurationPicker.svelte
+        RitualMineralHero.svelte
         RitualSlotsPanel.svelte
       vault/
         VaultViewSwitch.svelte
@@ -96,6 +106,22 @@ src/
 ### Icons
 - Functional icons come from a single SVG sprite: `static/icons/sprite.svg`.
 - `Icon.svelte` references symbols (`/icons/sprite.svg#icon-*`) with decorative defaults.
+
+### Asset Strategy
+- Functional UI icons use `static/icons/sprite.svg`.
+- Material and artifact media are presentation assets, not gameplay definitions.
+- Material visual assets live in `src/lib/assets/materials/`.
+- Artifact visual assets live in `src/lib/assets/artifacts/`.
+- Asset registries live in `src/lib/assets/materialAssets.ts` and `src/lib/assets/artifactAssets.ts`.
+- Material illustrations may use AVIF, WebP, or PNG.
+- Future 3D models should use GLB and be referenced through the same registry pattern.
+- Current wired gameplay material visuals: Clay, Limestone, Marble.
+- Extra files may exist in asset folders for future candidates, but they must not appear in the app until the material is added to `MaterialType`, `src/data/materials.ts`, and the relevant domain/data flow.
+
+### Object vs Display Support
+- Mineral object assets should represent the material/object itself.
+- Pedestals, steles, stands, bases, and scene supports should stay separate future UI/scene assets.
+- Keeping objects and supports separate makes the same material asset reusable in Workshop, Ritual, Vault, and future 3D scenes.
 
 ### Sandbox
 - `src/index.ts` remains an integration sandbox for domain/app checks outside UI.

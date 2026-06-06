@@ -55,7 +55,8 @@
   .media-panel.has-media {
     grid-template-rows: auto minmax(0, 1fr);
     place-items: center;
-    padding: clamp(var(--space-2), 8%, var(--space-4));
+    padding: clamp(var(--space-3), 9%, var(--space-5));
+    min-height: min(72vw, 28rem);
   }
 
   .media-panel.has-media .media-preview-image {
@@ -81,8 +82,8 @@
     display: block;
     width: auto;
     height: auto;
-    max-width: 88%;
-    max-height: min(88%, 22rem);
+    max-width: 92%;
+    max-height: min(92%, 24rem);
     border-radius: var(--surface-radius-sm);
     object-fit: contain;
   }
