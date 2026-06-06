@@ -24,14 +24,18 @@
   {/if}
 
   {#if previewImage}
-    <section class="preview-media-placeholder" aria-label={`${displayName} visual preview`}>
+    <section
+      class="preview-media-surface"
+      class:has-media={previewImage !== null}
+      aria-label={`${displayName} visual preview`}
+    >
       <img class="preview-image" src={previewImage} alt={`${displayName} material preview`} />
       {#if hasModel3d}
         <p class="placeholder-hint">3D model available for future viewer integration.</p>
       {/if}
     </section>
   {:else}
-    <section class="preview-media-placeholder" aria-label="Future material visual area">
+    <section class="preview-media-surface" aria-label="Future material visual area">
       <p class="placeholder-title">Material Visual Placeholder</p>
       <p class="placeholder-note">
         Reserved for future SVG, image, or 3D presentation.
@@ -67,19 +71,34 @@
     font-size: 0.92rem;
   }
 
-  .preview-media-placeholder {
+  .preview-media-surface {
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
     border: 1px dashed var(--color-border);
     border-radius: var(--surface-radius-sm);
     padding: var(--surface-padding-sm);
     background: var(--color-surface);
     display: grid;
     gap: var(--space-1);
+    overflow: hidden;
+    place-items: center;
+    text-align: center;
+  }
+
+  .preview-media-surface.has-media {
+    border-style: solid;
+    padding: clamp(var(--space-2), 8%, var(--space-4));
+    text-align: initial;
   }
 
   .preview-image {
-    width: 100%;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 88%;
+    max-height: 88%;
     border-radius: var(--surface-radius-sm);
-    object-fit: cover;
+    object-fit: contain;
   }
 
   .placeholder-title {

@@ -11,7 +11,11 @@
   $: hasModel3d = materialAsset.model3d !== null;
 </script>
 
-<section aria-labelledby="mineral-media-heading" class="media-panel">
+<section
+  aria-labelledby="mineral-media-heading"
+  class="media-panel"
+  class:has-media={previewImage !== null}
+>
   <h3 id="mineral-media-heading">Mineral Visual Surface</h3>
   {#if previewImage}
     <img class="media-preview-image" src={previewImage} alt={`${materialName} mineral visual preview`} />
@@ -38,12 +42,28 @@
   }
 
   .media-panel {
+    box-sizing: border-box;
     border: 1px dashed var(--color-border);
     border-radius: var(--surface-radius-sm);
     padding: var(--surface-padding-sm);
     background: var(--color-surface);
     display: grid;
     gap: var(--space-1);
+    overflow: hidden;
+  }
+
+  .media-panel.has-media {
+    grid-template-rows: auto minmax(0, 1fr);
+    place-items: center;
+    padding: clamp(var(--space-2), 8%, var(--space-4));
+  }
+
+  .media-panel.has-media .media-preview-image {
+    aspect-ratio: 1 / 1;
+  }
+
+  .media-panel.has-media {
+    border-style: solid;
   }
 
   .media-placeholder-label {
@@ -58,8 +78,12 @@
   }
 
   .media-preview-image {
-    width: 100%;
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 88%;
+    max-height: min(88%, 22rem);
     border-radius: var(--surface-radius-sm);
-    object-fit: cover;
+    object-fit: contain;
   }
 </style>
