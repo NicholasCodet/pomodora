@@ -123,6 +123,26 @@ src/
 - Pedestals, steles, stands, bases, and scene supports should stay separate future UI/scene assets.
 - Keeping objects and supports separate makes the same material asset reusable in Workshop, Ritual, Vault, and future 3D scenes.
 
+### Adding a New Playable Material
+Adding a material is a gameplay/content change, not just an asset wiring change. A material must be added deliberately across domain types, static data, assets, progression, unlocks, and validation.
+
+Required updates:
+- Add the new key to `MaterialType` in `src/core/models.ts`.
+- Add a full `MaterialDefinition` in `src/data/materials.ts` with cost, stage count, cumulative thresholds, presentation metadata, and `possibleArtifactIds`.
+- Add matching artifact definitions in `src/data/artifacts.ts` before referencing their IDs from the material.
+- Wire supported visual assets in `src/lib/assets/materialAssets.ts`.
+- Review progression thresholds and unlock behavior in `src/core/progression.ts`.
+- Review purchase validation and shop behavior through existing domain/app helpers.
+- Check persistence validation in `src/utils/storage.ts` if saved-state shape or accepted material values change.
+- Add or update sandbox scenarios in `src/index.ts` for purchase, progression, reveal, and unlock edge cases.
+- Update documentation when the material becomes part of gameplay.
+
+Do not:
+- Add a material to UI lists only.
+- Wire an image asset and treat it as playable content.
+- Reference artifact IDs that are not defined.
+- Add future asset-folder candidates to gameplay until the domain/data changes above are complete.
+
 ### Sandbox
 - `src/index.ts` remains an integration sandbox for domain/app checks outside UI.
 

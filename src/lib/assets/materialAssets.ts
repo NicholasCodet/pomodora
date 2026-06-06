@@ -1,7 +1,7 @@
 import type { MaterialType } from '../../core/models';
 import clayVisual from './materials/clay.avif';
-import limestoneVisual from './materials/limestone.png';
-import marbleVisual from './materials/marble.png';
+import limestoneVisual from './materials/limestone.avif';
+import marbleVisual from './materials/marble.avif';
 
 export interface MaterialAssetEntry {
   thumbnail: string | null;
