@@ -1,8 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { dev } from '$app/environment';
-  import { onDestroy, onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import Button from '$lib/components/Button.svelte';
+  import ArtifactRevealModal from '$lib/components/ritual/ArtifactRevealModal.svelte';
   import RitualCountdown from '$lib/components/ritual/RitualCountdown.svelte';
   import RitualDurationPicker from '$lib/components/ritual/RitualDurationPicker.svelte';
   import MineralMediaPanel from '$lib/components/ritual/MineralMediaPanel.svelte';
@@ -23,7 +24,10 @@
   type RitualDurationPreset = (typeof RITUAL_DURATION_PRESETS)[number];
   type RevealRarity = 'common' | 'rare' | 'epic';
   interface RevealMoment {
+    artifactId: string;
     artifactName: string;
+    artifactCategory: string;
+    artifactDescription: string;
     rarity: RevealRarity;
     materialLabel: string;
     collectionCount: number;
@@ -33,19 +37,11 @@
   let lastActionMessage = '';
   let latestReveal: RevealMoment | null = null;
   let isRevealModalOpen = false;
-  let revealModalElement: HTMLDivElement | null = null;
-  let isBodyScrollLocked = false;
-  let previousBodyOverflow = '';
-  let previousBodyTouchAction = '';
   let selectedDurationMinutes: RitualDurationPreset = 30;
   let isDurationPickerOpen = false;
 
   onMount(() => {
     sanctuaryStore.ensureRitualSelection();
-  });
-
-  onDestroy(() => {
-    unlockBodyScroll();
   });
 
   $: shopMaterials = getShopMaterialStates($sanctuaryStore);
@@ -95,12 +91,6 @@
       : hasInventory
         ? 'No active mineral selected yet. Ritual Slots are used as default fallback.'
         : 'No mineral ready for ritual. Visit Workshop to buy one.';
-  $: if (isRevealModalOpen) {
-    lockBodyScroll();
-    void focusRevealModal();
-  } else {
-    unlockBodyScroll();
-  }
 
   function getMaterialLabel(materialType: (typeof shopMaterials)[number]['type']): string {
     const material = shopMaterials.find((entry) => entry.type === materialType);
@@ -143,7 +133,10 @@
     const result = sanctuaryStore.revealSelectedMineral();
     if (result.ok) {
       latestReveal = {
+        artifactId: result.artifact.id,
         artifactName: result.artifact.name,
+        artifactCategory: result.artifact.artifactCategory,
+        artifactDescription: result.artifact.description,
         rarity: result.artifact.rarity,
         materialLabel: getMaterialLabel(result.artifact.materialType),
         collectionCount: result.state.collection.length,
@@ -250,45 +243,6 @@
     isRevealModalOpen = false;
   }
 
-  function handleRevealBackdropPointerDown(event: PointerEvent): void {
-    if (event.target === event.currentTarget) {
-      closeRevealModal();
-    }
-  }
-
-  function handleRevealModalKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && isRevealModalOpen) {
-      closeRevealModal();
-    }
-  }
-
-  function lockBodyScroll(): void {
-    if (isBodyScrollLocked || typeof document === 'undefined') {
-      return;
-    }
-
-    previousBodyOverflow = document.body.style.overflow;
-    previousBodyTouchAction = document.body.style.touchAction;
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-    isBodyScrollLocked = true;
-  }
-
-  function unlockBodyScroll(): void {
-    if (!isBodyScrollLocked || typeof document === 'undefined') {
-      return;
-    }
-
-    document.body.style.overflow = previousBodyOverflow;
-    document.body.style.touchAction = previousBodyTouchAction;
-    isBodyScrollLocked = false;
-  }
-
-  async function focusRevealModal(): Promise<void> {
-    await tick();
-    revealModalElement?.focus();
-  }
-
   async function handleGoToCollection(): Promise<void> {
     isRevealModalOpen = false;
     await goto('/vault');
@@ -298,7 +252,6 @@
 <svelte:head>
   <title>Ritual | Pomodora Sanctuary</title>
 </svelte:head>
-<svelte:window on:keydown={handleRevealModalKeydown} />
 
 <section aria-labelledby="ritual-heading" class="panel ritual-panel">
   <header>
@@ -477,41 +430,12 @@
   {/if}
 </section>
 
-{#if isRevealModalOpen && latestReveal}
-  <div class="modal-backdrop" role="presentation" on:pointerdown={handleRevealBackdropPointerDown}>
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="reveal-modal-heading"
-      class="reveal-modal"
-      tabindex="-1"
-      bind:this={revealModalElement}
-      on:pointerdown|stopPropagation
-    >
-      <h2 id="reveal-modal-heading">Artifact revealed</h2>
-      <p class="reveal-artifact-name">{latestReveal.artifactName}</p>
-      <p class={`reveal-rarity ${getRarityClass(latestReveal.rarity)}`}>
-        {formatRarityLabel(latestReveal.rarity)}
-      </p>
-      <dl class="reveal-meta">
-        <div>
-          <dt>Source Material</dt>
-          <dd>{latestReveal.materialLabel}</dd>
-        </div>
-        <div>
-          <dt>Collection</dt>
-          <dd>{latestReveal.collectionCount} total</dd>
-        </div>
-      </dl>
-      <p class="hint-text reveal-collection-status">Added to Collection.</p>
-
-      <div class="modal-actions">
-        <Button variant="primary" on:click={handleGoToCollection}>Go to Collection</Button>
-        <Button variant="secondary" on:click={closeRevealModal}>Continue</Button>
-      </div>
-    </div>
-  </div>
-{/if}
+<ArtifactRevealModal
+  open={isRevealModalOpen}
+  reveal={latestReveal}
+  onClose={closeRevealModal}
+  onGoToCollection={handleGoToCollection}
+/>
 
 <style>
   .panel {
@@ -652,52 +576,6 @@
 
   .secondary-panel {
     opacity: 0.72;
-  }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    background: rgba(15, 23, 42, 0.5);
-    display: grid;
-    place-items: center;
-    padding:
-      max(16px, env(safe-area-inset-top))
-      max(16px, env(safe-area-inset-right))
-      max(16px, env(safe-area-inset-bottom))
-      max(16px, env(safe-area-inset-left));
-  }
-
-  .reveal-modal {
-    box-sizing: border-box;
-    border: 1px solid #a3b2c7;
-    border-radius: var(--surface-radius-md);
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    padding: var(--surface-padding-sm);
-    display: grid;
-    gap: var(--space-1);
-    width: min(calc(100vw - 32px), 23.75rem);
-    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin: 0;
-  }
-
-  .modal-actions {
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .modal-actions :global(button) {
-    width: 100%;
-  }
-
-  .reveal-modal h2 {
-    margin: 0;
-  }
-
-  .reveal-collection-status {
-    font-size: 0.88rem;
   }
 
   .last-action-panel {
