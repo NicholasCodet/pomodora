@@ -7,8 +7,10 @@ export const load: PageLoad = async () => {
   }
 
   const { MATERIAL_ASSET_PREVIEW_ENTRIES } = await import('$lib/assets/materialAssetPreview');
+  const { ARTIFACT_ASSET_PREVIEW_ENTRIES } = await import('$lib/assets/artifactAssetPreview');
 
   return {
-    assets: MATERIAL_ASSET_PREVIEW_ENTRIES,
+    materials: MATERIAL_ASSET_PREVIEW_ENTRIES,
+    artifacts: ARTIFACT_ASSET_PREVIEW_ENTRIES,
   };
 };

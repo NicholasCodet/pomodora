@@ -3,7 +3,7 @@
 
   export let data: PageData;
 
-  function getStatusLabel(status: PageData['assets'][number]['status']): string {
+  function getMaterialStatusLabel(status: PageData['materials'][number]['status']): string {
     return status === 'active' ? 'Active gameplay' : 'Future asset';
   }
 
@@ -19,62 +19,136 @@
 <section aria-labelledby="asset-preview-heading" class="panel asset-preview-panel">
   <header class="page-header">
     <p class="eyebrow">Development only</p>
-    <h1 id="asset-preview-heading">Material Asset Preview</h1>
+    <h1 id="asset-preview-heading">Asset Preview</h1>
     <p class="section-intro">
-      Internal QA surface for active and future material visuals. Future assets shown here are not
-      playable materials until they are added to the domain model and data definitions.
+      Internal QA surface for material and artifact visuals. Future material assets shown here are
+      not playable materials until they are added to the domain model and data definitions.
     </p>
   </header>
 
   <div class="asset-summary" aria-label="Asset preview summary">
-    <p><strong>{data.assets.length}</strong> material visuals loaded for review.</p>
+    <p><strong>{data.materials.length}</strong> material visuals loaded for review.</p>
+    <p><strong>{data.artifacts.length}</strong> artifact visuals loaded for review.</p>
     <p>
-      Active assets are wired through the material registry. Future assets are file-only candidates.
+      Material assets are separated from gameplay availability. Artifact assets can be reviewed here
+      before they are owned in Collection.
     </p>
   </div>
 
-  <div class="asset-grid">
-    {#each data.assets as asset}
-      <article class={`asset-card status-${asset.status}`}>
-        <div class="asset-media">
-          <img src={asset.image} alt={`${asset.label} material visual preview`} loading="lazy" />
-        </div>
+  <section aria-labelledby="material-assets-heading" class="preview-section">
+    <header class="section-header">
+      <h2 id="material-assets-heading">Material assets</h2>
+      <p class="section-intro">Playable material visuals and future material candidates.</p>
+    </header>
 
-        <div class="asset-content">
-          <div class="asset-title-row">
-            <h2>{asset.label}</h2>
-            <div class="badge-group" aria-label={`${asset.label} asset status`}>
-              <span class="status-badge">{getStatusLabel(asset.status)}</span>
-              <span class={`qa-badge qa-${asset.qaStatus}`}>{formatLabel(asset.qaStatus)}</span>
-            </div>
+    <div class="asset-grid">
+      {#each data.materials as asset}
+        <article class={`asset-card status-${asset.status}`}>
+          <div class="asset-media">
+            <img src={asset.image} alt={`${asset.label} material visual preview`} loading="lazy" />
           </div>
 
-          <dl class="asset-meta">
-            <div>
-              <dt>Role</dt>
-              <dd>{formatLabel(asset.role)}</dd>
+          <div class="asset-content">
+            <div class="asset-title-row">
+              <h3>{asset.label}</h3>
+              <div class="badge-group" aria-label={`${asset.label} material asset status`}>
+                <span class="status-badge">{getMaterialStatusLabel(asset.status)}</span>
+                <span class={`qa-badge qa-${asset.qaStatus}`}>{formatLabel(asset.qaStatus)}</span>
+              </div>
             </div>
-            <div>
-              <dt>File</dt>
-              <dd><code>{asset.fileName}</code></dd>
-            </div>
-            <div>
-              <dt>Format</dt>
-              <dd>{asset.format.toUpperCase()}</dd>
-            </div>
-            <div>
-              <dt>Asset ID</dt>
-              <dd><code>{asset.id}</code></dd>
-            </div>
-          </dl>
 
-          {#if asset.note}
-            <p class="asset-note">{asset.note}</p>
-          {/if}
-        </div>
-      </article>
-    {/each}
-  </div>
+            <dl class="asset-meta">
+              <div>
+                <dt>Role</dt>
+                <dd>{formatLabel(asset.role)}</dd>
+              </div>
+              <div>
+                <dt>File</dt>
+                <dd><code>{asset.fileName}</code></dd>
+              </div>
+              <div>
+                <dt>Format</dt>
+                <dd>{asset.format.toUpperCase()}</dd>
+              </div>
+              <div>
+                <dt>Asset ID</dt>
+                <dd><code>{asset.id}</code></dd>
+              </div>
+            </dl>
+
+            {#if asset.note}
+              <p class="asset-note">{asset.note}</p>
+            {/if}
+          </div>
+        </article>
+      {/each}
+    </div>
+  </section>
+
+  <section aria-labelledby="artifact-assets-heading" class="preview-section">
+    <header class="section-header">
+      <h2 id="artifact-assets-heading">Artifact assets</h2>
+      <p class="section-intro">
+        Artifact visuals can be reviewed without revealing or owning the artifact in Collection.
+      </p>
+    </header>
+
+    <div class="asset-grid">
+      {#each data.artifacts as artifact}
+        <article class={`asset-card artifact-card qa-${artifact.qaStatus}`}>
+          <div class="asset-media artifact-media" class:asset-media-placeholder={artifact.image === null}>
+            {#if artifact.image}
+              <img src={artifact.image} alt={`${artifact.label} artifact visual preview`} loading="lazy" />
+            {:else}
+              <div class="pending-visual">
+                <p class="placeholder-kicker">Visual pending</p>
+                <p>No artifact image wired yet.</p>
+              </div>
+            {/if}
+          </div>
+
+          <div class="asset-content">
+            <div class="asset-title-row">
+              <h3>{artifact.label}</h3>
+              <div class="badge-group" aria-label={`${artifact.label} artifact asset status`}>
+                <span class="status-badge">Playable artifact</span>
+                <span class={`qa-badge qa-${artifact.qaStatus}`}>{formatLabel(artifact.qaStatus)}</span>
+              </div>
+            </div>
+
+            <dl class="asset-meta">
+              <div>
+                <dt>Artifact ID</dt>
+                <dd><code>{artifact.id}</code></dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{formatLabel(artifact.sourceMaterial)}</dd>
+              </div>
+              <div>
+                <dt>Rarity</dt>
+                <dd>{formatLabel(artifact.rarity)}</dd>
+              </div>
+              <div>
+                <dt>Category</dt>
+                <dd>{artifact.category}</dd>
+              </div>
+              <div>
+                <dt>File</dt>
+                <dd>{artifact.fileName ? artifact.fileName : 'none'}</dd>
+              </div>
+              <div>
+                <dt>Format</dt>
+                <dd>{artifact.format ? artifact.format.toUpperCase() : 'none'}</dd>
+              </div>
+            </dl>
+
+            <p class="asset-note">{artifact.note}</p>
+          </div>
+        </article>
+      {/each}
+    </div>
+  </section>
 </section>
 
 <style>
@@ -84,9 +158,15 @@
   }
 
   .page-header,
+  .preview-section,
+  .section-header,
   .asset-content {
     display: grid;
     gap: var(--space-1);
+  }
+
+  .preview-section {
+    gap: var(--space-3);
   }
 
   .eyebrow {
@@ -100,6 +180,7 @@
 
   h1,
   h2,
+  h3,
   p {
     margin: 0;
   }
@@ -110,6 +191,11 @@
   }
 
   h2 {
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  h3 {
     font-size: 1rem;
     line-height: 1.2;
   }
@@ -162,12 +248,23 @@
     overflow: hidden;
   }
 
+  .artifact-media {
+    aspect-ratio: 1 / 1;
+    padding: clamp(var(--space-2), 8%, var(--space-4));
+  }
+
+  .asset-media-placeholder {
+    aspect-ratio: 5 / 4;
+    border-style: dashed;
+    background: var(--color-background);
+  }
+
   .asset-media img {
     display: block;
     width: auto;
     height: auto;
-    max-width: 90%;
-    max-height: 90%;
+    max-width: 88%;
+    max-height: 88%;
     object-fit: contain;
   }
 
@@ -215,6 +312,20 @@
     border: 1px dashed var(--color-border);
     background: var(--color-background);
     color: var(--color-muted-text);
+  }
+
+  .pending-visual {
+    display: grid;
+    gap: var(--space-1);
+    color: var(--color-muted-text);
+    text-align: center;
+  }
+
+  .placeholder-kicker {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .asset-meta {
