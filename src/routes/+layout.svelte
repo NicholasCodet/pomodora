@@ -8,7 +8,11 @@
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: currentTab = getCurrentTab($page.url.pathname);
 
-  function getCurrentTab(pathname: string): 'ritual' | 'workshop' | 'vault' {
+  function getCurrentTab(pathname: string): 'ritual' | 'workshop' | 'vault' | null {
+    if (pathname.startsWith('/ritual')) {
+      return 'ritual';
+    }
+
     if (pathname.startsWith('/workshop')) {
       return 'workshop';
     }
@@ -17,7 +21,7 @@
       return 'vault';
     }
 
-    return 'ritual';
+    return null;
   }
 
   function formatMineralLabel(mineralId: string): string {
