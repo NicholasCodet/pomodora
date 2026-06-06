@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dev } from '$app/environment';
   import { page } from '$app/stores';
   import Icon from '$lib/components/Icon.svelte';
   import { getSelectedMineral } from '$lib/app/sanctuary';
@@ -7,6 +8,7 @@
 
   $: selectedMineral = getSelectedMineral($sanctuaryStore);
   $: currentTab = getCurrentTab($page.url.pathname);
+  $: isAssetPreviewActive = $page.url.pathname.startsWith('/dev/assets');
 
   function getCurrentTab(pathname: string): 'ritual' | 'workshop' | 'vault' | null {
     if (pathname.startsWith('/ritual')) {
@@ -35,9 +37,19 @@
 
 <div class="app-shell">
   <header class="app-header">
-    <div class="brand-block">
-      <p class="brand-kicker">Focus Ritual Sanctuary</p>
-      <p class="brand">Pomodora Sanctuary</p>
+    <div class="header-top">
+      <div class="brand-block">
+        <p class="brand-kicker">Focus Ritual Sanctuary</p>
+        <p class="brand">Pomodora Sanctuary</p>
+      </div>
+
+      {#if dev}
+        <nav aria-label="Development tools" class="dev-tools-nav">
+          <a href="/dev/assets" aria-current={isAssetPreviewActive ? 'page' : undefined}>
+            Asset preview
+          </a>
+        </nav>
+      {/if}
     </div>
 
     <section aria-labelledby="summary-heading" class="summary-section">
@@ -120,6 +132,13 @@
     gap: 0.2rem;
   }
 
+  .header-top {
+    display: flex;
+    gap: var(--space-2);
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
   .brand-kicker {
     margin: 0;
     font-size: 0.76rem;
@@ -133,6 +152,33 @@
     margin: 0;
     font-size: 1.2rem;
     font-weight: 700;
+  }
+
+  .dev-tools-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 1.8rem;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--chip-radius);
+    padding: 0.2rem 0.65rem;
+    color: var(--color-muted-text);
+    background: var(--color-background);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .dev-tools-nav a[aria-current='page'] {
+    border-style: solid;
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .dev-tools-nav a:focus-visible {
+    outline: 3px solid var(--color-primary-hover);
+    outline-offset: 2px;
   }
 
   .summary-section {
