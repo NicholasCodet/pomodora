@@ -1,8 +1,16 @@
 <script lang="ts">
+  import type { MaterialType } from '../../../core/models';
+  import { getMaterialAsset } from '$lib/assets/materialAssets';
+
+  export let materialType: MaterialType;
   export let displayName: string;
   export let shortDescription: string;
   export let artifactFamily: string | null = null;
   export let visualThemeHint: string | null = null;
+
+  $: materialAsset = getMaterialAsset(materialType);
+  $: previewImage = materialAsset.illustration ?? materialAsset.thumbnail;
+  $: hasModel3d = materialAsset.model3d !== null;
 </script>
 
 <section aria-label={`${displayName} preview`} class="material-preview-card">
@@ -15,15 +23,26 @@
     <p class="preview-family">Family: {artifactFamily}</p>
   {/if}
 
-  <section class="preview-media-placeholder" aria-label="Future material visual area">
-    <p class="placeholder-title">Material Visual Placeholder</p>
-    <p class="placeholder-note">
-      Reserved for future SVG, image, or 3D presentation.
-    </p>
-    {#if visualThemeHint}
-      <p class="placeholder-hint">Theme hint: {visualThemeHint}</p>
-    {/if}
-  </section>
+  {#if previewImage}
+    <section class="preview-media-placeholder" aria-label={`${displayName} visual preview`}>
+      <img class="preview-image" src={previewImage} alt={`${displayName} material preview`} />
+      {#if hasModel3d}
+        <p class="placeholder-hint">3D model available for future viewer integration.</p>
+      {/if}
+    </section>
+  {:else}
+    <section class="preview-media-placeholder" aria-label="Future material visual area">
+      <p class="placeholder-title">Material Visual Placeholder</p>
+      <p class="placeholder-note">
+        Reserved for future SVG, image, or 3D presentation.
+      </p>
+      {#if hasModel3d}
+        <p class="placeholder-hint">3D model available for future viewer integration.</p>
+      {:else if visualThemeHint}
+        <p class="placeholder-hint">Theme hint: {visualThemeHint}</p>
+      {/if}
+    </section>
+  {/if}
 </section>
 
 <style>
@@ -55,6 +74,12 @@
     background: var(--color-surface);
     display: grid;
     gap: var(--space-1);
+  }
+
+  .preview-image {
+    width: 100%;
+    border-radius: var(--surface-radius-sm);
+    object-fit: cover;
   }
 
   .placeholder-title {

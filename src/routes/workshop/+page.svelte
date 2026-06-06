@@ -138,6 +138,7 @@
       </p>
       <article class={`material-card selected-material-card ${getToneClass(selectedMaterial.type)}`}>
         <MaterialPreviewCard
+          materialType={selectedMaterial.type}
           displayName={materialPresentationByType[selectedMaterial.type].displayName}
           shortDescription={materialPresentationByType[selectedMaterial.type].shortDescription}
           artifactFamily={materialPresentationByType[selectedMaterial.type].artifactFamily}

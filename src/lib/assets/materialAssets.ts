@@ -1,4 +1,7 @@
 import type { MaterialType } from '../../core/models';
+import clayVisual from './materials/clay.avif';
+import limestoneVisual from './materials/limestone.png';
+import marbleVisual from './materials/marble.png';
 
 export interface MaterialAssetEntry {
   thumbnail: string | null;
@@ -8,18 +11,18 @@ export interface MaterialAssetEntry {
 
 const MATERIAL_ASSETS: Readonly<Record<MaterialType, MaterialAssetEntry>> = {
   clay: {
-    thumbnail: null,
-    illustration: null,
+    thumbnail: clayVisual,
+    illustration: clayVisual,
     model3d: null,
   },
   limestone: {
-    thumbnail: null,
-    illustration: null,
+    thumbnail: limestoneVisual,
+    illustration: limestoneVisual,
     model3d: null,
   },
   marble: {
-    thumbnail: null,
-    illustration: null,
+    thumbnail: marbleVisual,
+    illustration: marbleVisual,
     model3d: null,
   },
 };

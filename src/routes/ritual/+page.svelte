@@ -352,6 +352,7 @@
       />
       {#if !ritualIsRunning}
         <MineralMediaPanel
+          materialType={selectedProgress.view.materialType}
           materialName={selectedMineralName}
           visualThemeHint={selectedMineralThemeHint}
         />
