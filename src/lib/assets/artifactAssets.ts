@@ -1,4 +1,5 @@
 import type { ArtifactId } from '../../core/models';
+import clayCommonUrnVisual from './artifacts/clay-common-urn.png';
 
 export interface ArtifactAssetEntry {
   thumbnail: string | null;
@@ -8,8 +9,8 @@ export interface ArtifactAssetEntry {
 
 const ARTIFACT_ASSETS: Readonly<Record<ArtifactId, ArtifactAssetEntry>> = {
   'clay-common-urn': {
-    thumbnail: null,
-    illustration: null,
+    thumbnail: clayCommonUrnVisual,
+    illustration: clayCommonUrnVisual,
     model3d: null,
   },
   'clay-rare-seal': {

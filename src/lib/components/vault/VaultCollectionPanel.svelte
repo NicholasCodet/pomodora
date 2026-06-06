@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getArtifactAsset } from '$lib/assets/artifactAssets';
   import Button from '$lib/components/Button.svelte';
 
   type ArtifactRarity = 'common' | 'rare' | 'epic' | 'unknown';
@@ -77,6 +78,10 @@
   function toggleArtifactSelection(artifact: VaultCollectionArtifactView): void {
     const artifactKey = buildArtifactKey(artifact);
     selectedArtifactKey = selectedArtifactKey === artifactKey ? null : artifactKey;
+  }
+
+  function getArtifactIllustration(artifactId: string): string | null {
+    return getArtifactAsset(artifactId).illustration;
   }
 </script>
 
@@ -162,15 +167,26 @@
                       </section>
 
                       <section
-                        aria-labelledby={`artifact-visual-placeholder-${buildArtifactKey(artifact)}`}
-                        class="visual-placeholder"
+                        aria-labelledby={`artifact-visual-${buildArtifactKey(artifact)}`}
+                        class="artifact-visual"
                       >
-                        <h6 id={`artifact-visual-placeholder-${buildArtifactKey(artifact)}`}>
-                          Visual Detail Placeholder
-                        </h6>
-                        <p class="hint-text">
-                          Future update: artwork or 3D presentation will be displayed here.
-                        </p>
+                        <h6 id={`artifact-visual-${buildArtifactKey(artifact)}`}>Artifact visual</h6>
+                        {#if getArtifactIllustration(artifact.artifactId)}
+                          <div class="artifact-visual-surface artifact-visual-surface-filled">
+                            <img
+                              src={getArtifactIllustration(artifact.artifactId) ?? ''}
+                              alt={`${artifact.name} artifact visual`}
+                              loading="lazy"
+                            />
+                          </div>
+                        {:else}
+                          <div class="artifact-visual-surface artifact-visual-surface-placeholder">
+                            <p class="placeholder-kicker">Visual pending</p>
+                            <p class="hint-text">
+                              Future artwork or 3D presentation will appear here.
+                            </p>
+                          </div>
+                        {/if}
                       </section>
                     </section>
                   {/if}
@@ -316,13 +332,51 @@
     gap: var(--space-2);
   }
 
-  .visual-placeholder {
-    border: 1px dashed var(--color-border);
-    border-radius: var(--surface-radius-sm);
-    padding: var(--surface-padding-sm);
-    background: var(--color-background);
+  .artifact-visual {
     display: grid;
     gap: var(--space-1);
+  }
+
+  .artifact-visual-surface {
+    min-height: 10rem;
+    aspect-ratio: 1 / 1;
+    border: var(--surface-border);
+    border-radius: var(--surface-radius-sm);
+    background: var(--color-background);
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: clamp(var(--space-2), 8%, var(--space-4));
+    text-align: center;
+  }
+
+  .artifact-visual-surface-filled {
+    background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%);
+  }
+
+  .artifact-visual-surface-placeholder {
+    min-height: 8rem;
+    aspect-ratio: 5 / 3;
+    border-style: dashed;
+    padding: var(--space-2);
+  }
+
+  .artifact-visual-surface img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 88%;
+    max-height: 88%;
+    object-fit: contain;
+  }
+
+  .placeholder-kicker {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted-text);
   }
 
   .artifact-description {
